@@ -1,0 +1,794 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id             String          @id @default(uuid())
+  name           String
+  slug           String          @unique
+  logo           String?
+  address        String?
+  phone          String?
+  email          String?
+  country        String?
+  timezone       String          @default("Africa/Ndjamena")
+  currency       String          @default("FCFA")
+  language       String          @default("fr")
+  signature      String?
+  stamp          String?
+  logoPdf        String?
+  favicon        String?
+  primaryColor   String          @default("#1976D2")
+  secondaryColor String          @default("#DC004E")
+  directorName   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  auditLogs      AuditLog[]
+  chantiers      Chantier[]
+  clients        Client[]
+  settings       CompanySetting?
+  contracts      Contract[]
+  documents      Document[]
+  employees      Employee[]
+  expenses       Expense[]
+  invoices       Invoice[]
+  locations      Location[]
+  materials      Material[]
+  notifications  Notification[]
+  paymentInfo    PaymentInfo?
+  payments       Payment[]
+  presences      Presence[]
+  purchases      Purchase[]
+  salaries       Salary[]
+  stockFamilies  StockFamily[]
+  stockItems     StockItem[]
+  subscriptions  Subscription[]
+  suppliers      Supplier[]
+  users          User[]
+  vehicles       Vehicle[]
+  workers        Worker[]
+
+  @@map("companies")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  companyId     String?
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String
+  phoneCode     String         @default("+227")
+  password      String
+  role          UserRole       @default(EMPLOYEE)
+  avatar        String?
+  isActive      Boolean        @default(true)
+  isSuperAdmin  Boolean        @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  auditLogs     AuditLog[]
+  refreshTokens RefreshToken[]
+  company       Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([phoneCode, phone])
+  @@index([companyId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Subscription {
+  id        String             @id @default(uuid())
+  companyId String
+  plan      SubscriptionPlan   @default(TRIAL)
+  status    SubscriptionStatus @default(TRIAL)
+  startDate DateTime           @default(now())
+  endDate   DateTime
+  amount    Float              @default(0)
+  notes     String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  company   Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("subscriptions")
+}
+
+model Chantier {
+  id           String         @id @default(uuid())
+  companyId    String
+  name         String
+  code         String?
+  type         ChantierType
+  status       ChantierStatus @default(EN_ATTENTE)
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  budget       Float          @default(0)
+  spentAmount  Float          @default(0)
+  progress     Int            @default(0)
+  startDate    DateTime?
+  endDate      DateTime?
+  description  String?
+  responsable  String?
+  photos       String[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  dailyReports DailyReport[]
+  documents    Document[]
+  expenses     Expense[]
+  presences    Presence[]
+  purchases    Purchase[]
+
+  @@index([companyId])
+  @@map("chantiers")
+}
+
+model DailyReport {
+  id            String   @id @default(uuid())
+  companyId     String
+  chantierId    String
+  date          DateTime @default(now())
+  weather       String?
+  workersOnSite Int      @default(0)
+  workDone      String
+  issues        String?
+  tomorrowPlan  String?
+  photos        String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  chantier      Chantier @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, chantierId])
+  @@map("daily_reports")
+}
+
+model Employee {
+  id               String       @id @default(uuid())
+  companyId        String
+  matricule        String?
+  firstName        String
+  lastName         String
+  email            String?
+  phone            String
+  phoneCode        String       @default("+227")
+  address          String?
+  birthDate        DateTime?
+  nationalId       String?
+  cnssNumber       String?
+  position         String?
+  department       String?
+  hireDate         DateTime     @default(now())
+  contractType     ContractType @default(CDI)
+  salary           Float        @default(0)
+  isActive         Boolean      @default(true)
+  photo            String?
+  emergencyContact String?
+  emergencyPhone   String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  contracts        Contract[]
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  presences        Presence[]
+  salaries         Salary[]
+
+  @@index([companyId])
+  @@map("employees")
+}
+
+model Worker {
+  id        String     @id @default(uuid())
+  companyId String
+  firstName String
+  lastName  String
+  phone     String?
+  phoneCode String     @default("+227")
+  specialty String?
+  dailyRate Float      @default(0)
+  address   String?
+  isActive  Boolean    @default(true)
+  photo     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  presences Presence[]
+  salaries  Salary[]
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("workers")
+}
+
+model Supplier {
+  id          String      @id @default(uuid())
+  companyId   String
+  name        String
+  contactName String?
+  phone       String
+  phoneCode   String      @default("+227")
+  email       String?
+  address     String?
+  category    String?
+  rating      Int         @default(0)
+  notes       String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  purchases   Purchase[]
+  stockItems  StockItem[]
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("suppliers")
+}
+
+model Client {
+  id          String    @id @default(uuid())
+  companyId   String
+  name        String
+  contactName String?
+  phone       String
+  phoneCode   String    @default("+227")
+  email       String?
+  address     String?
+  type        String?
+  notes       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices    Invoice[]
+
+  @@index([companyId])
+  @@map("clients")
+}
+
+model StockFamily {
+  id          String           @id @default(uuid())
+  companyId   String
+  name        MaterialCategory
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items       StockItem[]
+
+  @@unique([companyId, name])
+  @@map("stock_families")
+}
+
+model StockItem {
+  id          String          @id @default(uuid())
+  companyId   String
+  familyId    String?
+  code        String
+  barcode     String?
+  name        String
+  description String?
+  unit        String          @default("unité")
+  price       Float           @default(0)
+  quantity    Float           @default(0)
+  minQuantity Float           @default(0)
+  location    String?
+  photo       String?
+  supplierId  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  family      StockFamily?    @relation(fields: [familyId], references: [id])
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
+  movements   StockMovement[]
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("stock_items")
+}
+
+model StockMovement {
+  id        String    @id @default(uuid())
+  companyId String
+  itemId    String
+  type      String
+  quantity  Float
+  reference String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  item      StockItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("stock_movements")
+}
+
+model Material {
+  id              String           @id @default(uuid())
+  companyId       String
+  name            String
+  category        MaterialCategory
+  brand           String?
+  model           String?
+  serialNumber    String?
+  purchaseDate    DateTime?
+  purchasePrice   Float            @default(0)
+  currentValue    Float            @default(0)
+  status          String           @default("operational")
+  location        String?
+  nextMaintenance DateTime?
+  photo           String?
+  notes           String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("materials")
+}
+
+model Vehicle {
+  id              String     @id @default(uuid())
+  companyId       String
+  plateNumber     String
+  brand           String
+  model           String
+  year            Int?
+  type            String?
+  fuelType        String?
+  status          String     @default("operational")
+  currentMileage  Float      @default(0)
+  photo           String?
+  insuranceExpiry DateTime?
+  technicalVisit  DateTime?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  locations       Location[]
+  company         Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, plateNumber])
+  @@map("vehicles")
+}
+
+model Location {
+  id          String    @id @default(uuid())
+  companyId   String
+  vehicleId   String
+  startDate   DateTime  @default(now())
+  endDate     DateTime?
+  dailyRate   Float     @default(0)
+  totalAmount Float     @default(0)
+  destination String?
+  clientName  String?
+  notes       String?
+  status      String    @default("active")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, vehicleId])
+  @@map("locations")
+}
+
+model Contract {
+  id         String       @id @default(uuid())
+  companyId  String
+  employeeId String?
+  title      String
+  type       ContractType @default(CDI)
+  startDate  DateTime     @default(now())
+  endDate    DateTime?
+  salary     Float        @default(0)
+  terms      String?
+  status     String       @default("active")
+  document   String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  company    Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee   Employee?    @relation(fields: [employeeId], references: [id])
+
+  @@index([companyId])
+  @@map("contracts")
+}
+
+model Document {
+  id         String       @id @default(uuid())
+  companyId  String
+  chantierId String?
+  type       DocumentType @default(AUTRE)
+  title      String
+  reference  String?
+  filePath   String?
+  fileSize   Int?
+  mimeType   String?
+  notes      String?
+  createdBy  String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  chantier   Chantier?    @relation(fields: [chantierId], references: [id])
+  company    Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("documents")
+}
+
+model Presence {
+  id          String         @id @default(uuid())
+  companyId   String
+  employeeId  String?
+  workerId    String?
+  chantierId  String?
+  date        DateTime       @default(now())
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      PresenceStatus @default(PRESENT)
+  hoursWorked Float?
+  overtime    Float          @default(0)
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  chantier    Chantier?      @relation(fields: [chantierId], references: [id])
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee    Employee?      @relation(fields: [employeeId], references: [id])
+  worker      Worker?        @relation(fields: [workerId], references: [id])
+
+  @@index([companyId, date])
+  @@index([employeeId])
+  @@index([workerId])
+  @@map("presences")
+}
+
+model Salary {
+  id         String        @id @default(uuid())
+  companyId  String
+  employeeId String?
+  workerId   String?
+  month      Int
+  year       Int
+  baseSalary Float         @default(0)
+  bonus      Float         @default(0)
+  deduction  Float         @default(0)
+  cnss       Float         @default(0)
+  netSalary  Float         @default(0)
+  status     PaymentStatus @default(EN_ATTENTE)
+  paidDate   DateTime?
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee   Employee?     @relation(fields: [employeeId], references: [id])
+  worker     Worker?       @relation(fields: [workerId], references: [id])
+
+  @@unique([companyId, employeeId, workerId, month, year])
+  @@index([companyId])
+  @@map("salaries")
+}
+
+model Purchase {
+  id          String        @id @default(uuid())
+  companyId   String
+  supplierId  String?
+  chantierId  String?
+  reference   String
+  date        DateTime      @default(now())
+  totalAmount Float         @default(0)
+  taxAmount   Float         @default(0)
+  status      PaymentStatus @default(EN_ATTENTE)
+  notes       String?
+  items       Json?
+  createdBy   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  chantier    Chantier?     @relation(fields: [chantierId], references: [id])
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  supplier    Supplier?     @relation(fields: [supplierId], references: [id])
+
+  @@index([companyId])
+  @@map("purchases")
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  companyId   String
+  chantierId  String?
+  category    ExpenseCategory @default(AUTRE)
+  description String
+  amount      Float           @default(0)
+  date        DateTime        @default(now())
+  receipt     String?
+  approvedBy  String?
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  chantier    Chantier?       @relation(fields: [chantierId], references: [id])
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, date])
+  @@map("expenses")
+}
+
+model Invoice {
+  id         String        @id @default(uuid())
+  companyId  String
+  clientId   String?
+  number     String
+  date       DateTime      @default(now())
+  dueDate    DateTime?
+  subtotal   Float         @default(0)
+  taxRate    Float         @default(0)
+  taxAmount  Float         @default(0)
+  total      Float         @default(0)
+  paidAmount Float         @default(0)
+  status     InvoiceStatus @default(BROUILLON)
+  notes      String?
+  items      Json?
+  createdBy  String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  client     Client?       @relation(fields: [clientId], references: [id])
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payments   Payment[]
+
+  @@unique([companyId, number])
+  @@index([companyId])
+  @@map("invoices")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  companyId String
+  invoiceId String?
+  amount    Float
+  method    PaymentMethod @default(ESPECES)
+  date      DateTime      @default(now())
+  reference String?
+  notes     String?
+  createdBy String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoice   Invoice?      @relation(fields: [invoiceId], references: [id])
+
+  @@index([companyId])
+  @@map("payments")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  companyId String?
+  userId    String?
+  type      NotificationType @default(SYSTEM)
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+  company   Company?         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, userId, isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  companyId String?
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValues Json?
+  newValues Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([companyId, createdAt])
+  @@map("audit_logs")
+}
+
+model CompanySetting {
+  id            String   @id @default(uuid())
+  companyId     String   @unique
+  invoicePrefix String   @default("FAC")
+  quotePrefix   String   @default("DEV")
+  orderPrefix   String   @default("BC")
+  nextInvoice   Int      @default(1)
+  nextQuote     Int      @default(1)
+  nextOrder     Int      @default(1)
+  taxRate       Float    @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_settings")
+}
+
+model PaymentInfo {
+  id           String   @id @default(uuid())
+  companyId    String?  @unique
+  amount       Float    @default(80000)
+  duration     Int      @default(365)
+  currency     String   @default("FCFA")
+  methods      Json     @default("[{\"name\": \"Amanata\", \"number\": \"92666942\", \"accountName\": \"BuildFlow ERP\"}, {\"name\": \"Nita\", \"number\": \"99293329\", \"accountName\": \"BuildFlow ERP\"}]")
+  instructions String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  company      Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("payment_info")
+}
+
+model SyncLog {
+  id             String   @id @default(uuid())
+  companyId      String
+  userId         String
+  direction      String
+  entity         String
+  localId        String?
+  serverId       String?
+  conflictAction String?
+  itemsSent      Int      @default(0)
+  itemsReceived  Int      @default(0)
+  errors         Json?
+  status         String   @default("success")
+  createdAt      DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@map("sync_logs")
+}
+
+model SyncConflict {
+  id         String    @id @default(uuid())
+  companyId  String
+  entity     String
+  entityId   String
+  localData  Json
+  serverData Json
+  resolution String?   @default("pending")
+  resolvedAt DateTime?
+  resolvedBy String?
+  createdAt  DateTime  @default(now())
+
+  @@index([companyId, entity, resolution])
+  @@map("sync_conflicts")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  EMPLOYEE
+  VIEWER
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+}
+
+enum SubscriptionPlan {
+  TRIAL
+  PAID
+}
+
+enum ChantierType {
+  VILLA
+  ROUTE
+  PONT
+  MUR
+  VOIRIE
+  CASERNE
+  CAMP_MILITAIRE
+  BATIMENT_ADMINISTRATIF
+  REHABILITATION
+  GENIE_CIVIL
+}
+
+enum ChantierStatus {
+  EN_ATTENTE
+  EN_COURS
+  EN_PAUSE
+  TERMINE
+  ANNULE
+}
+
+enum PresenceStatus {
+  PRESENT
+  ABSENT
+  RETARD
+  CONGE
+}
+
+enum ContractType {
+  CDD
+  CDI
+  STAGE
+  CONSULTANT
+  SOUS_TRAITANT
+}
+
+enum PaymentStatus {
+  EN_ATTENTE
+  PAYE
+  PARTIEL
+  ANNULE
+}
+
+enum DocumentType {
+  FACTURE
+  DEVIS
+  BON_COMMANDE
+  BON_LIVRAISON
+  RAPPORT
+  CONTRAT
+  AUTRE
+}
+
+enum NotificationType {
+  STOCK_FAIBLE
+  ABONNEMENT
+  MAINTENANCE
+  RETARD
+  PAIEMENT
+  ECHEANCE
+  SYSTEM
+}
+
+enum ExpenseCategory {
+  MATERIAU
+  MAIN_D_OEUVRE
+  TRANSPORT
+  EQUIPEMENT
+  ADMINISTRATIF
+  AUTRE
+}
+
+enum MaterialCategory {
+  EPI
+  OUTILS
+  TERRASSEMENT
+  FERRAILLAGE
+  MACHINES
+  MATERIAUX
+  CONSOMMABLES
+  INSTALLATIONS
+}
+
+enum InvoiceStatus {
+  BROUILLON
+  EMISE
+  PAYEE
+  PARTIELLEMENT_PAYEE
+  EN_RETARD
+  ANNULEE
+}
+
+enum PaymentMethod {
+  ESPECES
+  VIREMENT
+  MOBILE_MONEY
+  CHEQUE
+  AUTRE
+}
