@@ -26,12 +26,12 @@ const formFields: FormField[] = [
   { name: 'code', label: 'Code article', required: true, gridSize: 4 },
   { name: 'name', label: 'Nom', required: true, gridSize: 8 },
   { name: 'barcode', label: 'Code-barres', gridSize: 4 },
+  { name: 'description', label: 'Description', type: 'textarea', gridSize: 12 },
   { name: 'unit', label: 'Unité', type: 'select', options: UNIT_OPTIONS, defaultValue: 'unité', gridSize: 4 },
   { name: 'price', label: 'Prix unitaire (FCFA)', type: 'number', gridSize: 4 },
   { name: 'quantity', label: 'Quantité en stock', type: 'number', gridSize: 4 },
   { name: 'minQuantity', label: 'Seuil d\'alerte', type: 'number', gridSize: 4 },
   { name: 'location', label: 'Emplacement', gridSize: 4 },
-  { name: 'description', label: 'Description', type: 'textarea', gridSize: 12 },
 ];
 
 export default function StockPage() {

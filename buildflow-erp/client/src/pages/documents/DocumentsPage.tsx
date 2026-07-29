@@ -17,9 +17,9 @@ const TYPE_OPTIONS = [
 ];
 
 const formFields: FormField[] = [
-  { name: 'title', label: 'Titre', required: true, gridSize: 12 },
   { name: 'type', label: 'Type', type: 'select', options: TYPE_OPTIONS, required: true, defaultValue: 'AUTRE', gridSize: 6 },
-  { name: 'reference', label: 'Référence', gridSize: 6 },
+  { name: 'title', label: 'Titre', required: true, gridSize: 6 },
+  { name: 'reference', label: 'Référence', gridSize: 12 },
   { name: 'notes', label: 'Notes', type: 'textarea', gridSize: 12 },
 ];
 

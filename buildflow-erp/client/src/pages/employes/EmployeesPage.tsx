@@ -17,18 +17,18 @@ const CONTRACT_OPTIONS = [
 ];
 
 const formFields: FormField[] = [
-  { name: 'firstName', label: 'Prénom', required: true, gridSize: 6 },
-  { name: 'lastName', label: 'Nom', required: true, gridSize: 6 },
-  { name: 'phoneCode', label: 'Indicatif', defaultValue: '+227', gridSize: 3 },
-  { name: 'phone', label: 'Téléphone', required: true, gridSize: 9 },
+  { name: 'matricule', label: 'Matricule', gridSize: 4 },
+  { name: 'firstName', label: 'Prénom', required: true, gridSize: 4 },
+  { name: 'lastName', label: 'Nom', required: true, gridSize: 4 },
   { name: 'email', label: 'Email', type: 'email', gridSize: 6 },
-  { name: 'matricule', label: 'Matricule', gridSize: 6 },
+  { name: 'phone', label: 'Téléphone', required: true, gridSize: 6 },
+  { name: 'phoneCode', label: 'Indicatif', defaultValue: '+227', gridSize: 3 },
+  { name: 'address', label: 'Adresse', gridSize: 12 },
   { name: 'position', label: 'Poste', gridSize: 6 },
   { name: 'department', label: 'Département', gridSize: 6 },
+  { name: 'hireDate', label: 'Date embauche', type: 'date', gridSize: 4 },
   { name: 'contractType', label: 'Type contrat', type: 'select', options: CONTRACT_OPTIONS, defaultValue: 'CDI', gridSize: 4 },
   { name: 'salary', label: 'Salaire (FCFA)', type: 'number', gridSize: 4 },
-  { name: 'hireDate', label: 'Date embauche', type: 'date', gridSize: 4 },
-  { name: 'address', label: 'Adresse', gridSize: 12 },
 ];
 
 export default function EmployeesPage() {

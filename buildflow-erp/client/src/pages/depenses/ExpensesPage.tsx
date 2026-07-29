@@ -18,8 +18,8 @@ const CATEGORY_OPTIONS = [
 ];
 
 const formFields: FormField[] = [
-  { name: 'description', label: 'Description', required: true, gridSize: 12 },
   { name: 'category', label: 'Catégorie', type: 'select', options: CATEGORY_OPTIONS, required: true, gridSize: 6 },
+  { name: 'description', label: 'Description', required: true, gridSize: 6 },
   { name: 'amount', label: 'Montant (FCFA)', type: 'number', required: true, gridSize: 6 },
   { name: 'date', label: 'Date', type: 'date', defaultValue: new Date().toISOString().split('T')[0], gridSize: 6 },
   { name: 'notes', label: 'Notes', type: 'textarea', gridSize: 12 },

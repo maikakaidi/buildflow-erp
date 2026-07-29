@@ -12,8 +12,8 @@ import { useOfflineData } from '../../hooks/useOfflineData';
 const formFields: FormField[] = [
   { name: 'firstName', label: 'Prénom', required: true, gridSize: 6 },
   { name: 'lastName', label: 'Nom', required: true, gridSize: 6 },
-  { name: 'phoneCode', label: 'Indicatif', defaultValue: '+227', gridSize: 3 },
   { name: 'phone', label: 'Téléphone', gridSize: 9 },
+  { name: 'phoneCode', label: 'Indicatif', defaultValue: '+227', gridSize: 3 },
   { name: 'specialty', label: 'Spécialité', gridSize: 6 },
   { name: 'dailyRate', label: 'Tarif journalier (FCFA)', type: 'number', gridSize: 6 },
   { name: 'address', label: 'Adresse', gridSize: 12 },

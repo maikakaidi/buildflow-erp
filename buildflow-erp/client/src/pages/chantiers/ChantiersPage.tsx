@@ -35,12 +35,12 @@ const formFields: FormField[] = [
   { name: 'code', label: 'Code', gridSize: 4 },
   { name: 'type', label: 'Type', type: 'select', options: TYPE_OPTIONS, required: true, gridSize: 4 },
   { name: 'status', label: 'Statut', type: 'select', options: STATUS_OPTIONS, defaultValue: 'EN_ATTENTE', gridSize: 4 },
-  { name: 'responsable', label: 'Responsable', gridSize: 6 },
-  { name: 'budget', label: 'Budget (FCFA)', type: 'number', gridSize: 6 },
   { name: 'address', label: 'Adresse', gridSize: 12 },
+  { name: 'budget', label: 'Budget (FCFA)', type: 'number', gridSize: 6 },
   { name: 'startDate', label: 'Date début', type: 'date', gridSize: 6 },
   { name: 'endDate', label: 'Date fin', type: 'date', gridSize: 6 },
   { name: 'description', label: 'Description', type: 'textarea', gridSize: 12 },
+  { name: 'responsable', label: 'Responsable', gridSize: 12 },
 ];
 
 export default function ChantiersPage() {

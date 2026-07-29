@@ -24,11 +24,12 @@ interface FormDialogProps {
   fields: FormField[];
   values?: Record<string, any>;
   loading?: boolean;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   onClose: () => void;
   onSubmit: (data: Record<string, any>) => void;
 }
 
-export default function FormDialog({ open, title, fields, values, loading, onClose, onSubmit }: FormDialogProps) {
+export default function FormDialog({ open, title, fields, values, loading, maxWidth = 'md', onClose, onSubmit }: FormDialogProps) {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
   useEffect(() => {

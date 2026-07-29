@@ -11,11 +11,11 @@ import { useOfflineData } from '../../hooks/useOfflineData';
 const formFields: FormField[] = [
   { name: 'name', label: 'Nom du client', required: true, gridSize: 12 },
   { name: 'contactName', label: 'Personne de contact', gridSize: 6 },
-  { name: 'type', label: 'Type', gridSize: 6 },
+  { name: 'phone', label: 'Téléphone', required: true, gridSize: 6 },
   { name: 'phoneCode', label: 'Indicatif', defaultValue: '+227', gridSize: 3 },
-  { name: 'phone', label: 'Téléphone', required: true, gridSize: 9 },
   { name: 'email', label: 'Email', type: 'email', gridSize: 6 },
   { name: 'address', label: 'Adresse', gridSize: 6 },
+  { name: 'type', label: 'Type', gridSize: 12 },
 ];
 
 export default function ClientsPage() {

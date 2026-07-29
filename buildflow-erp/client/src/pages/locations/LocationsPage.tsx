@@ -42,8 +42,8 @@ export default function LocationsPage() {
     { name: 'totalAmount', label: 'Montant total (FCFA)', type: 'number', gridSize: 6 },
     { name: 'destination', label: 'Destination', gridSize: 6 },
     { name: 'clientName', label: 'Client', gridSize: 6 },
-    { name: 'status', label: 'Statut', type: 'select', options: [{ value: 'active', label: 'En cours' }, { value: 'completed', label: 'Terminé' }, { value: 'cancelled', label: 'Annulé' }], defaultValue: 'active', gridSize: 6 },
     { name: 'notes', label: 'Notes', type: 'textarea', gridSize: 12 },
+    { name: 'status', label: 'Statut', type: 'select', options: [{ value: 'active', label: 'En cours' }, { value: 'completed', label: 'Terminé' }, { value: 'cancelled', label: 'Annulé' }], defaultValue: 'active', gridSize: 6 },
   ];
 
   const handleSubmit = async (formData: Record<string, any>) => {
