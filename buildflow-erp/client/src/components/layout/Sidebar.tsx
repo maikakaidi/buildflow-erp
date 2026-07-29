@@ -31,6 +31,7 @@ import {
   Map as LocationIcon,
   SwapHoriz as SwapHorizIcon,
   Group as GroupIcon,
+  Timeline as TimelineIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -89,7 +90,14 @@ const navItems: NavItem[] = [
     ],
   },
   { label: 'Documents', path: '/documents', icon: <DocumentIcon /> },
-  { label: 'Rapports', path: '/rapports', icon: <ReportIcon /> },
+  {
+    label: 'Rapports', path: '/rapports', icon: <ReportIcon />,
+    children: [
+      { label: 'Analyse financière', path: '/rapports', icon: <ReportIcon /> },
+      { label: "Rapport d'activité", path: '/rapports/activite', icon: <TimelineIcon /> },
+      { label: 'Rapport de stock', path: '/rapports/stock', icon: <StockIcon /> },
+    ],
+  },
   { label: 'Utilisateurs', path: '/users', icon: <GroupIcon /> },
   { label: 'Notifications', path: '/notifications', icon: <NotificationIcon /> },
   { label: 'Paramètres', path: '/settings', icon: <SettingsIcon /> },

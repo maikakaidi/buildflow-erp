@@ -30,6 +30,8 @@ import PaymentsPage from './pages/paiements/PaymentsPage';
 import LocationsPage from './pages/locations/LocationsPage';
 import DocumentsPage from './pages/documents/DocumentsPage';
 import RapportsPage from './pages/rapports/RapportsPage';
+import RapportActivitePage from './pages/rapports/RapportActivitePage';
+import RapportStockPage from './pages/rapports/RapportStockPage';
 import StockMovementsPage from './pages/stocks/StockMovementsPage';
 import UsersPage from './pages/utilisateurs/UsersPage';
 import ChantierDetailPage from './pages/rapports/chantier/ChantierDetailPage';
@@ -104,6 +106,8 @@ function AppRoutes() {
             <Route path="locations" element={<LocationsPage />} />
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="rapports" element={<RapportsPage />} />
+            <Route path="rapports/activite" element={<RapportActivitePage />} />
+            <Route path="rapports/stock" element={<RapportStockPage />} />
             <Route path="rapports/chantier/:id" element={<ChantierDetailPage />} />
             <Route path="rapports/employe/:id" element={<EmployeDetailPage />} />
             <Route path="rapports/vehicule/:id" element={<VehiculeDetailPage />} />

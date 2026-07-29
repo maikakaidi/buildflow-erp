@@ -7,7 +7,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import { Assessment, GetApp } from '@mui/icons-material';
+import { Assessment, GetApp, Timeline, Inventory } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/common/PageHeader';
 import { generatePdf, downloadPdf } from '../../utils/pdf';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +18,7 @@ const COLORS = ['#4f8cff', '#dc004e', '#00c853', '#ff9800', '#9c27b0', '#00bcd4'
 
 export default function RapportsPage() {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { company } = useAuth();
   const [period, setPeriod] = useState('12');
   const [loading, setLoading] = useState(true);
@@ -122,6 +124,33 @@ export default function RapportsPage() {
         } }}
         onRefresh={loadData}
       />
+
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }} onClick={() => navigate('/rapports/activite')}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Timeline sx={{ fontSize: 40, color: 'primary.main' }} />
+              <Box><Typography variant="h6" fontWeight={600}>Activité</Typography><Typography variant="body2" color="text.secondary">Synthèse chantiers, finances</Typography></Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ cursor: 'pointer', '&:hover': { borderColor: 'warning.main' } }} onClick={() => navigate('/rapports/stock')}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Inventory sx={{ fontSize: 40, color: 'warning.main' }} />
+              <Box><Typography variant="h6" fontWeight={600}>Stock</Typography><Typography variant="body2" color="text.secondary">État des stocks et alertes</Typography></Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ cursor: 'pointer', '&:hover': { borderColor: 'success.main' } }} onClick={() => navigate('/dashboard')}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Assessment sx={{ fontSize: 40, color: 'success.main' }} />
+              <Box><Typography variant="h6" fontWeight={600}>Dashboard</Typography><Typography variant="body2" color="text.secondary">Tableau de bord général</Typography></Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
