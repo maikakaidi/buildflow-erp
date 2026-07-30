@@ -4,7 +4,7 @@ import {
   IconButton, Chip, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Grid, MenuItem, Skeleton, Avatar, Typography, alpha, useTheme,
 } from '@mui/material';
-import { Add, Edit, LockReset, People } from '@mui/icons-material';
+import { Add, Edit, LockReset, People, ToggleOff, ToggleOn, Delete } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import PageHeader from '../../components/common/PageHeader';
 import api from '../../api/client';
@@ -113,11 +113,28 @@ export default function SuperAdminUsersPage() {
                     </TableCell>
                     <TableCell align="right">
                       {!u.isSuperAdmin && (
-                        <Tooltip title="Réinitialiser mot de passe">
-                          <IconButton size="small" color="warning" onClick={() => handleResetPassword(u.id, `${u.firstName} ${u.lastName}`)}>
-                            <LockReset fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <>
+                          <Tooltip title={u.isActive ? 'Désactiver' : 'Activer'}>
+                            <IconButton size="small" color={u.isActive ? 'warning' : 'success'} onClick={async () => {
+                              try { await api.put(`/super-admin/users/${u.id}`, { isActive: !u.isActive }); toast.success(u.isActive ? 'Désactivé' : 'Activé'); load(); } catch { toast.error('Erreur'); }
+                            }}>
+                              {u.isActive ? <ToggleOff fontSize="small" /> : <ToggleOn fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Réinitialiser mot de passe">
+                            <IconButton size="small" color="warning" onClick={() => handleResetPassword(u.id, `${u.firstName} ${u.lastName}`)}>
+                              <LockReset fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Supprimer">
+                            <IconButton size="small" color="error" onClick={async () => {
+                              if (!confirm(`Supprimer ${u.firstName} ${u.lastName} ?`)) return;
+                              try { await api.delete(`/super-admin/users/${u.id}`); toast.success('Supprimé'); load(); } catch { toast.error('Erreur'); }
+                            }}>
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </>
                       )}
                     </TableCell>
                   </TableRow>

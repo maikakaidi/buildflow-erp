@@ -152,9 +152,41 @@ export default function SettingsPage() {
                 <TextField label="Taux TVA (%)" type="number" value={settingsData.taxRate || 0} onChange={(e) => updateSettings('taxRate', parseFloat(e.target.value))} fullWidth size="small" />
               </Grid>
               <Grid item xs={12}>
-                <Button variant="contained" startIcon={saving ? <CircularProgress size={18} /> : <SaveIcon />} onClick={handleSaveSettings} disabled={saving}>
+                <Button variant="contained" startIcon={saving ? <CircularProgress size={18} /> : <SaveIcon />} onClick={handleSaveCompany} disabled={saving}>
                   Enregistrer
                 </Button>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" fontWeight={600} gutterBottom>Hébergement & Abonnement</Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Pour activer ou renouveler votre abonnement, effectuez un paiement de <strong>80 000 FCFA</strong> par an sur l'un des numéros WhatsApp ci-dessous, puis contactez le support.
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Card variant="outlined" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                      <CardContent>
+                        <Typography variant="subtitle2" fontWeight={600}>Moov (Nita)</Typography>
+                        <Typography variant="h5" fontWeight={700} color="primary.main">99293329</Typography>
+                        <Button size="small" variant="text" href="https://wa.me/22799293329" target="_blank" sx={{ mt: 1 }}>
+                          Envoyer sur WhatsApp
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Card variant="outlined" sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.05) }}>
+                      <CardContent>
+                        <Typography variant="subtitle2" fontWeight={600}>Airtel (Amana)</Typography>
+                        <Typography variant="h5" fontWeight={700} color="secondary.main">92666942</Typography>
+                        <Button size="small" variant="text" href="https://wa.me/22792666942" target="_blank" sx={{ mt: 1 }}>
+                          Envoyer sur WhatsApp
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
               </Grid>
             </Grid>
           )}

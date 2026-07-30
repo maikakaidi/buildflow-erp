@@ -26,6 +26,16 @@ router.post('/', async (req: AuthRequest, res: any, next: any) => {
     const companyId = req.user!.companyId;
     if (!companyId) return res.status(400).json({ success: false, message: 'Entreprise requise' });
 
+    const activeCount = await prisma.user.count({ where: { companyId, isSuperAdmin: false, isActive: true } });
+    if (activeCount >= 3) {
+      return res.status(403).json({
+        success: false,
+        message: 'Limite de 3 utilisateurs gratuits atteinte. Payez 20 000 FCFA sur WhatsApp (Moov 99293329 ou Airtel 92666942) pour ajouter un utilisateur supplémentaire.',
+        limitReached: true,
+        paymentInfo: { moov: '99293329', airtel: '92666942', amount: '20 000 FCFA' },
+      });
+    }
+
     const { firstName, lastName, email, phone, phoneCode = '+227', password, role = 'EMPLOYEE' } = req.body;
     if (!firstName || !lastName || !phone || !password) {
       return res.status(400).json({ success: false, message: 'Champs requis manquants' });
