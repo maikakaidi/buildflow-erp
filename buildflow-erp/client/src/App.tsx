@@ -126,24 +126,24 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <DynamicThemeWrapper>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: '#1a1d29',
-              color: '#e4e6f0',
-              border: '1px solid #2a2e3f',
-              borderRadius: 12,
-            },
-          }}
-        />
-        <AuthProvider>
+      <AuthProvider>
+        <DynamicThemeWrapper>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: '#1a1d29',
+                color: '#e4e6f0',
+                border: '1px solid #2a2e3f',
+                borderRadius: 12,
+              },
+            }}
+          />
           <BrowserRouter>
             <AppRoutes />
           </BrowserRouter>
-        </AuthProvider>
-      </DynamicThemeWrapper>
+        </DynamicThemeWrapper>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
