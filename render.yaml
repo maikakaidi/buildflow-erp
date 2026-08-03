@@ -20,6 +20,8 @@ services:
         generateValue: true
       - key: CORS_ORIGIN
         sync: false
+      - key: CLOUDINARY_URL
+        sync: false
 databases:
   - name: buildflow-erp-db
     plan: free
