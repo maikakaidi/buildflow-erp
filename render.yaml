@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDirectory: buildflow-erp
     plan: free
-    buildCommand: cd server && npm ci && npx prisma generate && npm run build && cd ../client && npm ci && npm run build
+    buildCommand: cd server && npm ci --include=dev && npx prisma generate && npm run build && cd ../client && npm ci --include=dev && npm run build
     startCommand: cd server && npx prisma migrate deploy && npx prisma db seed && node dist/index.js
     healthCheckPath: /api/health
     envVars:
