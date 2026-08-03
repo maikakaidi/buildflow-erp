@@ -25,5 +25,5 @@ services:
 databases:
   - name: buildflow-erp-db
     plan: free
-    databaseName: buildflow_erp
-    user: buildflow
+    databaseName: buildflow_erp_db
+    user: buildflow_erp_db_user
