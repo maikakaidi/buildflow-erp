@@ -4,6 +4,7 @@ import syncService from '../api/sync';
 
 interface User {
   id: string;
+  companyId?: string;
   firstName: string;
   lastName: string;
   email?: string;
@@ -24,6 +25,7 @@ interface Company {
   currency: string;
   language: string;
   timezone: string;
+  maxUsers?: number;
 }
 
 interface AuthContextType {

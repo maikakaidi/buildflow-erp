@@ -32,8 +32,8 @@ export default function SuperAdminPaymentsPage() {
           amount: 80000,
           duration: 365,
           currency: 'FCFA',
-          instructions: "Effectuez le paiement sur l'un des comptes suivants :\n\nMoov (Flooz) : 99293329\nAirtel (Money) : 92666942\n\nEnvoyez une capture d'écran après le paiement.",
-          methods: ['Moov', 'Airtel'],
+          instructions: "Effectuez le paiement sur l'un des comptes suivants :\n\nAirtel (Nita) : 99293329\nOrange (Amana) : 92666942\n\nEnvoyez une capture d'écran après le paiement.",
+          methods: ['Airtel', 'Orange'],
         });
       }
     } catch { toast.error('Erreur'); }

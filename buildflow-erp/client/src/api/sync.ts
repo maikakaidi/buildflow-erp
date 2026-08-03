@@ -4,7 +4,7 @@ import api from './client';
 type EntityType =
   | 'chantiers' | 'employees' | 'workers' | 'suppliers' | 'clients'
   | 'stockItems' | 'materials' | 'vehicles' | 'purchases' | 'expenses'
-  | 'presences' | 'dailyReports';
+  | 'presences' | 'dailyReports' | 'stockMovements';
 
 const ENTITY_ENDPOINT_MAP: Record<EntityType, string> = {
   chantiers: 'chantiers',
@@ -19,7 +19,57 @@ const ENTITY_ENDPOINT_MAP: Record<EntityType, string> = {
   expenses: 'expenses',
   presences: 'presences',
   dailyReports: 'daily-reports',
+  stockMovements: 'stock-movements',
 };
+
+function getCompanyId(): string | null {
+  try {
+    const raw = localStorage.getItem('company');
+    if (raw) {
+      const company = JSON.parse(raw);
+      return company?.id || null;
+    }
+  } catch {}
+  return null;
+}
+
+async function resolvePhotoTokens(data: any): Promise<any> {
+  if (!data) return data;
+  const out = { ...data };
+
+  if (Array.isArray(data.photos)) {
+    out.photos = [];
+    for (const url of data.photos) {
+      out.photos.push(await resolveSinglePhoto(url));
+    }
+  }
+
+  if (typeof data.photo === 'string' && data.photo.startsWith('pending:')) {
+    out.photo = await resolveSinglePhoto(data.photo);
+  }
+
+  return out;
+}
+
+async function resolveSinglePhoto(url: string): Promise<string> {
+  if (typeof url !== 'string' || !url.startsWith('pending:')) return url;
+  const token = url.slice('pending:'.length);
+  const rec = await db.photoUploads.get(token);
+  if (rec?.blob) {
+    try {
+      const formData = new FormData();
+      formData.append('file', rec.blob, rec.fileName || 'photo.jpg');
+      const { data: res } = await api.upload('/upload/image', formData);
+      if (res.success) {
+        await db.photoUploads.delete(token);
+        return res.data.url;
+      }
+    } catch {
+      // upload échoué : on garde le token pour un prochain essai
+    }
+  }
+  return url;
+}
 
 class SyncService {
   private isSyncing = false;
@@ -68,14 +118,16 @@ class SyncService {
     }
   }
 
-  async addToQueue(entity: EntityType, action: 'create' | 'update' | 'delete', data: any, serverId?: string) {
+  async addToQueue(entity: EntityType, action: 'create' | 'update' | 'delete', data: any, serverId?: string, companyId?: string) {
     const localId = data._localId || generateLocalId();
+    const itemCompanyId = companyId || getCompanyId() || data.companyId || '';
 
     const item = {
       entity,
       action,
       localId,
       serverId,
+      companyId: itemCompanyId,
       data: { ...data, _localId: localId },
       timestamp: new Date().toISOString(),
       retries: 0,
@@ -90,7 +142,7 @@ class SyncService {
       if (existing) {
         await table.update(data.id || localId, { _syncStatus: 'pending', updatedAt: new Date().toISOString() });
       } else {
-        await table.add({ ...data, id: localId, _localId: localId, _syncStatus: 'pending', updatedAt: new Date().toISOString() });
+        await table.add({ ...data, id: localId, _localId: localId, companyId: itemCompanyId, _syncStatus: 'pending', updatedAt: new Date().toISOString() });
       }
     }
 
@@ -104,6 +156,12 @@ class SyncService {
   async processQueue() {
     if (this.isSyncing || !navigator.onLine) return;
 
+    const companyId = getCompanyId();
+    if (!companyId) {
+      this.isSyncing = false;
+      return;
+    }
+
     this.isSyncing = true;
     this.notify();
 
@@ -111,6 +169,7 @@ class SyncService {
       const pendingItems = await db.syncQueue
         .where('status')
         .equals('pending')
+        .filter((i) => !i.companyId || i.companyId === companyId)
         .limit(50)
         .toArray();
 
@@ -128,11 +187,16 @@ class SyncService {
 
       for (const [entity, items] of Object.entries(grouped)) {
         try {
-          const syncItems = items.map((i) => ({
-            ...i.data,
-            localId: i.localId,
-            serverId: i.serverId,
-          }));
+          const syncItems = [];
+          for (const i of items) {
+            const data = await resolvePhotoTokens(i.data);
+            syncItems.push({
+              action: i.action,
+              ...data,
+              localId: i.localId,
+              serverId: i.serverId,
+            });
+          }
 
           const response = await api.post('/sync/push', { entity, items: syncItems });
 
@@ -152,12 +216,22 @@ class SyncService {
                     ...localRecord,
                     id: result.id,
                     serverId: result.id,
+                    _serverId: result.id,
                     _syncStatus: 'synced',
                     updatedAt: new Date().toISOString(),
                   });
                 }
               } else {
                 await db.syncQueue.delete(queueItem.id!);
+              }
+            } else if (result.status === 'deleted') {
+              await db.syncQueue.delete(queueItem.id!);
+              const table = (db as any)[entity] as any;
+              if (table) {
+                const localRecord = await table.get(queueItem.localId);
+                if (localRecord) {
+                  await table.delete(queueItem.localId);
+                }
               }
             } else if (result.status === 'conflict') {
               await db.syncQueue.update(queueItem.id!, { status: 'failed', retries: queueItem.retries + 1 });
@@ -199,6 +273,12 @@ class SyncService {
   async syncAll() {
     if (!navigator.onLine || this.isSyncing) return;
 
+    const companyId = getCompanyId();
+    if (!companyId) {
+      this.isSyncing = false;
+      return;
+    }
+
     this.isSyncing = true;
     this.notify();
 
@@ -212,18 +292,31 @@ class SyncService {
         if (!table || !Array.isArray(serverItems)) continue;
 
         for (const item of serverItems) {
+          if (item.companyId && item.companyId !== companyId) continue;
+
+          if (item.deletedAt) {
+            await table.where('serverId').equals(item.id).delete();
+            await table.delete(item.id);
+            continue;
+          }
+
           const existing = await table.get(item.id);
           if (existing && existing._syncStatus === 'pending') {
-            if (new Date(item.updatedAt) > new Date(existing.updatedAt)) {
+            if (new Date(item.updatedAt) > new Date(existing.updatedAt || 0)) {
               await table.update(item.id, {
                 ...item,
+                _localId: existing._localId || item.id,
                 _syncStatus: 'synced',
+                serverId: item.id,
                 _serverId: item.id,
               });
             }
           } else {
             await table.put({
               ...item,
+              id: item.id,
+              serverId: item.id,
+              _serverId: item.id,
               _localId: item.id,
               _syncStatus: 'synced',
             });
@@ -268,7 +361,7 @@ class SyncService {
 
   async getConflicts() {
     const conflicts: any[] = [];
-    const tables = ['chantiers', 'employees', 'workers', 'stockItems', 'purchases', 'expenses', 'presences'];
+    const tables = ['chantiers', 'employees', 'workers', 'suppliers', 'clients', 'stockItems', 'purchases', 'expenses', 'presences', 'dailyReports', 'stockMovements'];
 
     for (const entity of tables) {
       const table = (db as any)[entity] as any;
@@ -287,10 +380,13 @@ class SyncService {
 
     if (resolution === 'server') {
       const item = await table.get(localId);
-      if (item?.serverId) {
-        const response = await api.get(`/modules/${ENTITY_ENDPOINT_MAP[entity as EntityType] || entity}/${item.serverId}`);
+      const serverId = item?.serverId || item?._serverId || item?.id;
+      if (serverId) {
+        const response = await api.get(`/modules/${ENTITY_ENDPOINT_MAP[entity as EntityType] || entity}/${serverId}`);
         await table.update(localId, {
           ...response.data.data,
+          _serverId: serverId,
+          serverId,
           _syncStatus: 'synced',
         });
       }

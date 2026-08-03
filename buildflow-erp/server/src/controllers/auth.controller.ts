@@ -82,6 +82,7 @@ export class AuthController {
             role: userWithoutPassword.role,
             isSuperAdmin: userWithoutPassword.isSuperAdmin,
             avatar: userWithoutPassword.avatar,
+            companyId: userWithoutPassword.companyId,
           },
           company: userWithoutPassword.company
             ? {
@@ -94,6 +95,7 @@ export class AuthController {
                 currency: userWithoutPassword.company.currency,
                 language: userWithoutPassword.company.language,
                 timezone: userWithoutPassword.company.timezone,
+                maxUsers: userWithoutPassword.company.maxUsers,
               }
             : null,
         },

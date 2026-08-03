@@ -167,7 +167,7 @@ export default function SettingsPage() {
                   <Grid item xs={12} sm={6}>
                     <Card variant="outlined" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
                       <CardContent>
-                        <Typography variant="subtitle2" fontWeight={600}>Moov (Nita)</Typography>
+                        <Typography variant="subtitle2" fontWeight={600}>Airtel (Nita)</Typography>
                         <Typography variant="h5" fontWeight={700} color="primary.main">99293329</Typography>
                         <Button size="small" variant="text" href="https://wa.me/22799293329" target="_blank" sx={{ mt: 1 }}>
                           Envoyer sur WhatsApp
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                   <Grid item xs={12} sm={6}>
                     <Card variant="outlined" sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.05) }}>
                       <CardContent>
-                        <Typography variant="subtitle2" fontWeight={600}>Airtel (Amana)</Typography>
+                        <Typography variant="subtitle2" fontWeight={600}>Orange (Amana)</Typography>
                         <Typography variant="h5" fontWeight={700} color="secondary.main">92666942</Typography>
                         <Button size="small" variant="text" href="https://wa.me/22792666942" target="_blank" sx={{ mt: 1 }}>
                           Envoyer sur WhatsApp

@@ -103,52 +103,6 @@ export default function RegisterPage() {
               </Typography>
             </Alert>
 
-            <Box sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2, p: 3, mb: 3, border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Payment color="primary" />
-                <Typography variant="h6" fontWeight={700} color="primary">
-                  Activer votre hébergement annuel
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                Pour continuer à utiliser BuildFlow ERP après la période d'essai, souscrivez à l'hébergement annuel pour <strong>80 000 FCFA/an</strong>.
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                Contactez-nous via WhatsApp pour effectuer votre paiement :
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Button
-                  variant="outlined"
-                  component="a"
-                  href="https://wa.me/22799293329"
-                  target="_blank"
-                  startIcon={<Phone />}
-                  sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                >
-                  <Box>
-                    <Typography variant="body2" fontWeight={600}>Nita (Moov) — 99 29 33 29</Typography>
-                    <Typography variant="caption" color="text.secondary">Envoyer le preuve de paiement via WhatsApp</Typography>
-                  </Box>
-                </Button>
-                <Button
-                  variant="outlined"
-                  component="a"
-                  href="https://wa.me/22792666942"
-                  target="_blank"
-                  startIcon={<Phone />}
-                  sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                >
-                  <Box>
-                    <Typography variant="body2" fontWeight={600}>Amana (Airtel) — 92 66 69 42</Typography>
-                    <Typography variant="caption" color="text.secondary">Envoyer le preuve de paiement via WhatsApp</Typography>
-                  </Box>
-                </Button>
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-                Après paiement, envoyez la capture d'écran sur WhatsApp. Votre hébergement sera activé dans les plus brefs délais.
-              </Typography>
-            </Box>
-
             <Button
               variant="contained"
               fullWidth

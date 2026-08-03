@@ -169,11 +169,11 @@ export default function DashboardPage() {
               <Typography variant="body2" color="text.secondary" fontWeight={500}>Paiement hébergement :</Typography>
               <Button size="small" variant="outlined" color="success" startIcon={<OpenInNew />}
                 onClick={() => openWhatsApp('99293329')}>
-                Moov : 99 29 33 29
+                Airtel : 99 29 33 29
               </Button>
               <Button size="small" variant="outlined" color="info" startIcon={<OpenInNew />}
                 onClick={() => openWhatsApp('92666942')}>
-                Airtel : 92 66 69 42
+                Orange : 92 66 69 42
               </Button>
             </Box>
           )}

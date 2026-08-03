@@ -32,6 +32,7 @@ import {
   SwapHoriz as SwapHorizIcon,
   Group as GroupIcon,
   Timeline as TimelineIcon,
+  Sync as SyncIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
@@ -41,24 +42,29 @@ interface NavItem {
   label: string;
   path: string;
   icon: React.ReactNode;
-  children?: { label: string; path: string; icon: React.ReactNode }[];
+  roles?: string[];
+  children?: { label: string; path: string; icon: React.ReactNode; roles?: string[] }[];
 }
 
+const ROLE_ALL = ['ADMIN', 'MANAGER', 'EMPLOYEE', 'VIEWER'];
+const ROLE_MANAGER = ['ADMIN', 'MANAGER'];
+const ROLE_EMPLOYEE = ['ADMIN', 'MANAGER', 'EMPLOYEE'];
+
 const navItems: NavItem[] = [
-  { label: 'Tableau de bord', path: '/dashboard', icon: <DashboardIcon /> },
-  { label: 'Chantiers', path: '/chantiers', icon: <ChantierIcon /> },
+  { label: 'Tableau de bord', path: '/dashboard', icon: <DashboardIcon />, roles: ROLE_ALL },
+  { label: 'Chantiers', path: '/chantiers', icon: <ChantierIcon />, roles: ROLE_ALL },
   {
-    label: 'Ressources Humaines', path: '/rh', icon: <EmployeeIcon />,
+    label: 'Ressources Humaines', path: '/rh', icon: <EmployeeIcon />, roles: ROLE_EMPLOYEE,
     children: [
       { label: 'Employés', path: '/employees', icon: <EmployeeIcon /> },
       { label: 'Ouvriers', path: '/workers', icon: <WorkerIcon /> },
       { label: 'Présences', path: '/presences', icon: <PresenceIcon /> },
-      { label: 'Salaires', path: '/salaries', icon: <MoneyIcon /> },
-      { label: 'Contrats', path: '/contracts', icon: <ContractIcon /> },
+      { label: 'Salaires', path: '/salaries', icon: <MoneyIcon />, roles: ROLE_MANAGER },
+      { label: 'Contrats', path: '/contracts', icon: <ContractIcon />, roles: ROLE_MANAGER },
     ],
   },
   {
-    label: 'Inventaire', path: '/inventory', icon: <StockIcon />,
+    label: 'Inventaire', path: '/inventory', icon: <StockIcon />, roles: ROLE_EMPLOYEE,
     children: [
       { label: 'Stock', path: '/stock', icon: <StockIcon /> },
       { label: 'Familles', path: '/stock-families', icon: <CategoryIcon /> },
@@ -67,7 +73,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: 'Achats & Dépenses', path: '/finance', icon: <PurchaseIcon />,
+    label: 'Achats & Dépenses', path: '/finance', icon: <PurchaseIcon />, roles: ROLE_MANAGER,
     children: [
       { label: 'Achats', path: '/purchases', icon: <PurchaseIcon /> },
       { label: 'Dépenses', path: '/expenses', icon: <ExpenseIcon /> },
@@ -76,31 +82,32 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: 'Partenaires', path: '/partners', icon: <SupplierIcon />,
+    label: 'Partenaires', path: '/partners', icon: <SupplierIcon />, roles: ROLE_MANAGER,
     children: [
       { label: 'Fournisseurs', path: '/suppliers', icon: <SupplierIcon /> },
       { label: 'Clients', path: '/clients', icon: <ClientIcon /> },
     ],
   },
   {
-    label: 'Parc & Équipements', path: '/fleet', icon: <VehicleIcon />,
+    label: 'Parc & Équipements', path: '/fleet', icon: <VehicleIcon />, roles: ROLE_MANAGER,
     children: [
       { label: 'Véhicules', path: '/vehicles', icon: <VehicleIcon /> },
       { label: 'Locations', path: '/locations', icon: <LocationIcon /> },
     ],
   },
-  { label: 'Documents', path: '/documents', icon: <DocumentIcon /> },
+  { label: 'Documents', path: '/documents', icon: <DocumentIcon />, roles: ROLE_EMPLOYEE },
   {
-    label: 'Rapports', path: '/rapports', icon: <ReportIcon />,
+    label: 'Rapports', path: '/rapports', icon: <ReportIcon />, roles: ROLE_ALL,
     children: [
       { label: 'Analyse financière', path: '/rapports', icon: <ReportIcon /> },
       { label: "Rapport d'activité", path: '/rapports/activite', icon: <TimelineIcon /> },
       { label: 'Rapport de stock', path: '/rapports/stock', icon: <StockIcon /> },
     ],
   },
-  { label: 'Utilisateurs', path: '/users', icon: <GroupIcon /> },
-  { label: 'Notifications', path: '/notifications', icon: <NotificationIcon /> },
-  { label: 'Paramètres', path: '/settings', icon: <SettingsIcon /> },
+  { label: 'Utilisateurs', path: '/users', icon: <GroupIcon />, roles: ROLE_MANAGER },
+  { label: 'Synchronisation', path: '/sync', icon: <SyncIcon />, roles: ROLE_MANAGER },
+  { label: 'Notifications', path: '/notifications', icon: <NotificationIcon />, roles: ROLE_ALL },
+  { label: 'Paramètres', path: '/settings', icon: <SettingsIcon />, roles: ROLE_MANAGER },
 ];
 
 export default function Sidebar() {
@@ -109,6 +116,16 @@ export default function Sidebar() {
   const location = useLocation();
   const { user, company } = useAuth();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
+  const userRole = user?.role || 'EMPLOYEE';
+  const visibleItems = navItems
+    .filter((item) => !item.roles || item.roles.includes(userRole))
+    .map((item) => {
+      if (!item.children) return item;
+      const children = item.children.filter((child) => !child.roles || child.roles.includes(userRole));
+      return children.length > 0 ? { ...item, children } : null;
+    })
+    .filter((item): item is NavItem => Boolean(item));
 
   const handleToggle = (section: string) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -153,7 +170,7 @@ export default function Sidebar() {
       <Divider sx={{ mx: 2, mb: 1 }} />
 
       <List sx={{ px: 1, flex: 1, overflowY: 'auto' }}>
-        {navItems.map((item) => (
+        {visibleItems.map((item) => (
           <React.Fragment key={item.path}>
             {item.children ? (
               <>

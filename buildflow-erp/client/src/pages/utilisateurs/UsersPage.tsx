@@ -5,6 +5,7 @@ import PageHeader from '../../components/common/PageHeader';
 import DataTable, { Column } from '../../components/common/DataTable';
 import FormDialog, { FormField } from '../../components/common/FormDialog';
 import api from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 
 const ROLE_OPTIONS = [
   { value: 'ADMIN', label: 'Admin' },
@@ -15,6 +16,8 @@ const ROLE_OPTIONS = [
 
 export default function UsersPage() {
   const theme = useTheme();
+  const { company } = useAuth();
+  const maxUsers = company?.maxUsers ?? 3;
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,7 +96,7 @@ export default function UsersPage() {
 
   return (
     <Box>
-      <PageHeader title="Utilisateurs" subtitle={`${data.length} utilisateur(s) — 3 gratuits, puis 20 000 FCFA/extra`}
+      <PageHeader title="Utilisateurs" subtitle={`${data.length} utilisateur(s) — ${maxUsers} inclus, puis 20 000 FCFA/extra`}
         action={{ label: 'Ajouter un utilisateur', onClick: () => { setEditItem(null); setDialogOpen(true); setLimitError(null); } }}
         onRefresh={loadData}
       />
@@ -106,14 +109,14 @@ export default function UsersPage() {
               <Typography variant="h6" fontWeight={600} color="warning.main">Limite d'utilisateurs atteinte</Typography>
             </Box>
             <Typography variant="body2" paragraph>
-              Vous avez atteint la limite de 3 utilisateurs gratuits. Pour ajouter un nouvel utilisateur, payez <strong>20 000 FCFA</strong> sur l'un des numéros WhatsApp ci-dessous :
+              Vous avez atteint la limite de {maxUsers} utilisateurs. Pour ajouter un nouvel utilisateur, payez <strong>20 000 FCFA</strong> sur l'un des numéros WhatsApp ci-dessous :
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <Button variant="outlined" color="primary" startIcon={<WhatsApp />} href="https://wa.me/22799293329" target="_blank">
-                Moov (Nita) 99293329 — 20 000 FCFA
+                Airtel (Nita) 99293329 — 20 000 FCFA
               </Button>
               <Button variant="outlined" color="secondary" startIcon={<WhatsApp />} href="https://wa.me/22792666942" target="_blank">
-                Airtel (Amana) 92666942 — 20 000 FCFA
+                Orange (Amana) 92666942 — 20 000 FCFA
               </Button>
             </Box>
           </CardContent>

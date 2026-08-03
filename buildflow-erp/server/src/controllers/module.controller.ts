@@ -18,6 +18,7 @@ const rm = (prisma as any)._runtimeDataModel;
 const delegateToModel = new Map<any, string>();
 const MODEL_NUMERIC: Record<string, Set<string>> = {};
 const MODEL_DATES: Record<string, Set<string>> = {};
+const MODEL_SOFT_DELETE = new Set<string>();
 
 for (const [name, model] of Object.entries(rm.models as Record<string, any>)) {
   const numeric = new Set<string>();
@@ -26,6 +27,7 @@ for (const [name, model] of Object.entries(rm.models as Record<string, any>)) {
     if (field.kind === 'scalar') {
       if (field.type === 'Int' || field.type === 'Float') numeric.add(field.name);
       if (field.type === 'DateTime') dates.add(field.name);
+      if (field.name === 'deletedAt') MODEL_SOFT_DELETE.add(name);
     }
   }
   MODEL_NUMERIC[name] = numeric;
@@ -41,12 +43,14 @@ export class ModuleController {
   private model: any;
   private include?: any;
   private modelName: string;
+  private softDelete: boolean;
 
   constructor(entity: string, model: any, include?: any) {
     this.entity = entity;
     this.model = model;
     this.include = include;
     this.modelName = delegateToModel.get(model) || '';
+    this.softDelete = MODEL_SOFT_DELETE.has(this.modelName);
   }
 
   private filterData(body: any): any {
@@ -85,6 +89,7 @@ export class ModuleController {
 
       const skip = (Number(page) - 1) * Number(limit);
       const where: any = { companyId };
+      if (this.softDelete) where.deletedAt = null;
 
       if (search) {
         const searchFields = ['name', 'firstName', 'lastName', 'code', 'description', 'reference', 'title'];
@@ -123,7 +128,7 @@ export class ModuleController {
       const companyId = req.user!.companyId;
 
       const item = await this.model.findFirst({
-        where: { id, companyId },
+        where: { id, companyId, ...(this.softDelete ? { deletedAt: null } : {}) },
         ...(this.include ? { include: this.include } : {}),
       });
 
@@ -181,7 +186,11 @@ export class ModuleController {
       const existing = await this.model.findFirst({ where: { id, companyId } });
       if (!existing) throw new AppError(`${this.entity} introuvable`, 404);
 
-      await this.model.delete({ where: { id } });
+      if (this.softDelete) {
+        await this.model.update({ where: { id }, data: { deletedAt: new Date(), updatedAt: new Date() } });
+      } else {
+        await this.model.delete({ where: { id } });
+      }
 
       res.json({ success: true, message: `${this.entity} supprimé` });
     } catch (error) {

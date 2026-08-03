@@ -5,6 +5,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import fs from 'fs';
 
 import { config } from './config';
 import logger from './config/logger';
@@ -54,6 +55,15 @@ app.use('/api/modules', checkSubscription, moduleRoutes);
 app.use('/api/dashboard', checkSubscription, dashboardRoutes);
 app.use('/api/settings', checkSubscription, settingsRoutes);
 app.use('/api/company-users', checkSubscription, companyUsersRoutes);
+
+const clientDist = path.join(__dirname, '../../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
 
 app.use(errorHandler);
 

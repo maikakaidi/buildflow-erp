@@ -4,7 +4,6 @@ import { Construction } from '@mui/icons-material';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable, { Column } from '../../components/common/DataTable';
 import FormDialog, { FormField } from '../../components/common/FormDialog';
-import FileUpload from '../../components/common/FileUpload';
 import StatusChip from '../../components/common/StatusChip';
 import api from '../../api/client';
 import { useOfflineData } from '../../hooks/useOfflineData';
@@ -42,7 +41,7 @@ const formFields: FormField[] = [
   { name: 'endDate', label: 'Date fin', type: 'date', gridSize: 6 },
   { name: 'description', label: 'Description', type: 'textarea', gridSize: 12 },
   { name: 'responsable', label: 'Responsable', gridSize: 6 },
-  { name: 'photos', label: 'Photos (URLs séparées par des virgules)', gridSize: 6 },
+  { name: 'photos', label: 'Photos', type: 'upload', uploadType: 'image', multiple: true, gridSize: 12 },
 ];
 
 export default function ChantiersPage() {
@@ -76,8 +75,7 @@ export default function ChantiersPage() {
       if (formData.photos && typeof formData.photos === 'string') {
         formData.photos = formData.photos.split(',').map((s: string) => s.trim()).filter(Boolean);
       }
-      if (editItem) {
-        if (isOnline) {
+      if (editItem) {        if (isOnline) {
           await api.put(`/modules/chantiers/${editItem.id}`, formData);
         } else {
           await offlineData.update(editItem.id, formData);

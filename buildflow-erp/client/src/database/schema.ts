@@ -155,6 +155,23 @@ export interface DailyReportOffline extends OfflineEntity {
   workDone: string;
   issues?: string;
   tomorrowPlan?: string;
+  photos?: string[];
+}
+
+export interface StockMovementOffline extends OfflineEntity {
+  itemId: string;
+  type: string;
+  quantity: number;
+  reference?: string;
+  notes?: string;
+}
+
+export interface PhotoUpload {
+  token: string;
+  blob: Blob;
+  fileName?: string;
+  entity: string;
+  createdAt: string;
 }
 
 export interface SyncQueueItem {
@@ -163,6 +180,7 @@ export interface SyncQueueItem {
   action: 'create' | 'update' | 'delete';
   localId: string;
   serverId?: string;
+  companyId?: string;
   data: any;
   timestamp: string;
   retries: number;
@@ -200,6 +218,8 @@ class BuildFlowDatabase extends Dexie {
   expenses!: Table<ExpenseOffline>;
   presences!: Table<PresenceOffline>;
   dailyReports!: Table<DailyReportOffline>;
+  stockMovements!: Table<StockMovementOffline>;
+  photoUploads!: Table<PhotoUpload>;
   syncQueue!: Table<SyncQueueItem>;
   syncJournal!: Table<SyncJournalEntry>;
 
@@ -219,7 +239,26 @@ class BuildFlowDatabase extends Dexie {
       expenses: 'id, serverId, companyId, _syncStatus, category, date',
       presences: 'id, serverId, companyId, _syncStatus, date, employeeId, workerId',
       dailyReports: 'id, serverId, companyId, _syncStatus, chantierId, date',
-      syncQueue: '++id, entity, localId, status, timestamp',
+      syncQueue: '++id, entity, localId, status, timestamp, companyId',
+      syncJournal: '++id, timestamp, entity, direction',
+    });
+
+    this.version(2).stores({
+      chantiers: 'id, serverId, companyId, _syncStatus, name, status, type',
+      employees: 'id, serverId, companyId, _syncStatus, firstName, lastName, phone',
+      workers: 'id, serverId, companyId, _syncStatus, firstName, lastName',
+      suppliers: 'id, serverId, companyId, _syncStatus, name',
+      clients: 'id, serverId, companyId, _syncStatus, name',
+      stockItems: 'id, serverId, companyId, _syncStatus, code, name, familyId',
+      materials: 'id, serverId, companyId, _syncStatus, name, category',
+      vehicles: 'id, serverId, companyId, _syncStatus, plateNumber, brand',
+      purchases: 'id, serverId, companyId, _syncStatus, reference, date',
+      expenses: 'id, serverId, companyId, _syncStatus, category, date',
+      presences: 'id, serverId, companyId, _syncStatus, date, employeeId, workerId',
+      dailyReports: 'id, serverId, companyId, _syncStatus, chantierId, date',
+      stockMovements: 'id, serverId, companyId, _syncStatus, itemId, type, date',
+      photoUploads: 'token, entity, createdAt',
+      syncQueue: '++id, entity, localId, status, timestamp, companyId',
       syncJournal: '++id, timestamp, entity, direction',
     });
   }

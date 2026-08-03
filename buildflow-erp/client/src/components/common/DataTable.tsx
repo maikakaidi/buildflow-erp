@@ -9,8 +9,9 @@ import {
 import {
   Search as SearchIcon, FilterList as FilterIcon, MoreVert as MoreIcon,
   Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon,
-  Refresh as RefreshIcon,
+  Refresh as RefreshIcon, TableChart as CsvIcon,
 } from '@mui/icons-material';
+import { exportCsv } from '../../utils/csv';
 
 export interface Column<T> {
   id: string;
@@ -35,11 +36,13 @@ interface DataTableProps<T> {
   actions?: { label: string; icon: React.ReactNode; onClick: (row: T) => void; color?: string }[];
   emptyMessage?: string;
   title?: string;
+  enableCsvExport?: boolean;
 }
 
 export default function DataTable<T extends { id: string; _syncStatus?: string }>({
   columns, data, loading, searchable = true, searchPlaceholder = 'Rechercher...',
   searchFields, onRefresh, onEdit, onDelete, onView, actions, emptyMessage = 'Aucune donnée',
+  enableCsvExport = true,
 }: DataTableProps<T>) {
   const theme = useTheme();
   const [page, setPage] = useState(0);
@@ -82,6 +85,20 @@ export default function DataTable<T extends { id: string; _syncStatus?: string }
 
   const handleMenuClose = () => { setAnchorEl(null); setSelectedRow(null); };
 
+  const handleCsvExport = () => {
+    const exportColumns = columns.filter((col) => col.label);
+    const headers = exportColumns.map((col) => col.label);
+    const rows = sorted.map((row) =>
+      exportColumns.map((col) => {
+        const v = (row as any)[col.id];
+        if (Array.isArray(v)) return v.join(', ');
+        if (v && typeof v === 'object') return JSON.stringify(v);
+        return v;
+      })
+    );
+    exportCsv(`export-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -109,6 +126,11 @@ export default function DataTable<T extends { id: string; _syncStatus?: string }
             />
           )}
           <Box sx={{ flex: 1 }} />
+          {enableCsvExport && sorted.length > 0 && (
+            <Tooltip title="Exporter en CSV">
+              <IconButton onClick={handleCsvExport}><CsvIcon /></IconButton>
+            </Tooltip>
+          )}
           {onRefresh && (
             <Tooltip title="Actualiser">
               <IconButton onClick={onRefresh}><RefreshIcon /></IconButton>

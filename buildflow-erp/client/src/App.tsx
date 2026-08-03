@@ -41,6 +41,7 @@ import SuperAdminDashboardPage from './pages/admin/SuperAdminDashboardPage';
 import CompaniesPage from './pages/admin/CompaniesPage';
 import SuperAdminUsersPage from './pages/admin/UsersPage';
 import SuperAdminPaymentsPage from './pages/admin/PaymentsPage';
+import SyncPage from './pages/synchronisation/SyncPage';
 import syncService from './api/sync';
 
 const queryClient = new QueryClient({
@@ -48,6 +49,17 @@ const queryClient = new QueryClient({
     queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 5 * 60 * 1000 },
   },
 });
+
+const ROLE_ALL = ['ADMIN', 'MANAGER', 'EMPLOYEE', 'VIEWER'];
+const ROLE_MANAGER = ['ADMIN', 'MANAGER'];
+const ROLE_EMPLOYEE = ['ADMIN', 'MANAGER', 'EMPLOYEE'];
+
+function RequireRole({ roles, children }: { roles: string[]; children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!roles.includes(user.role)) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
 
 function SyncInitializer() {
   const { user } = useAuth();
@@ -85,35 +97,36 @@ function AppRoutes() {
         ) : (
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="chantiers" element={<ChantiersPage />} />
-            <Route path="employees" element={<EmployeesPage />} />
-            <Route path="workers" element={<WorkersPage />} />
-            <Route path="presences" element={<PresencesPage />} />
-            <Route path="salaries" element={<SalariesPage />} />
-            <Route path="contracts" element={<ContractsPage />} />
-            <Route path="stock" element={<StockPage />} />
-            <Route path="stock-families" element={<StockFamiliesPage />} />
-            <Route path="stock-movements" element={<StockMovementsPage />} />
-            <Route path="materials" element={<MaterialsPage />} />
-            <Route path="purchases" element={<PurchasesPage />} />
-            <Route path="expenses" element={<ExpensesPage />} />
-            <Route path="invoices" element={<InvoicesPage />} />
-            <Route path="payments" element={<PaymentsPage />} />
-            <Route path="suppliers" element={<SuppliersPage />} />
-            <Route path="clients" element={<ClientsPage />} />
-            <Route path="vehicles" element={<VehiclesPage />} />
-            <Route path="locations" element={<LocationsPage />} />
-            <Route path="documents" element={<DocumentsPage />} />
-            <Route path="rapports" element={<RapportsPage />} />
-            <Route path="rapports/activite" element={<RapportActivitePage />} />
-            <Route path="rapports/stock" element={<RapportStockPage />} />
-            <Route path="rapports/chantier/:id" element={<ChantierDetailPage />} />
-            <Route path="rapports/employe/:id" element={<EmployeDetailPage />} />
-            <Route path="rapports/vehicule/:id" element={<VehiculeDetailPage />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="dashboard" element={<RequireRole roles={ROLE_ALL}><DashboardPage /></RequireRole>} />
+            <Route path="chantiers" element={<RequireRole roles={ROLE_ALL}><ChantiersPage /></RequireRole>} />
+            <Route path="employees" element={<RequireRole roles={ROLE_EMPLOYEE}><EmployeesPage /></RequireRole>} />
+            <Route path="workers" element={<RequireRole roles={ROLE_EMPLOYEE}><WorkersPage /></RequireRole>} />
+            <Route path="presences" element={<RequireRole roles={ROLE_EMPLOYEE}><PresencesPage /></RequireRole>} />
+            <Route path="salaries" element={<RequireRole roles={ROLE_MANAGER}><SalariesPage /></RequireRole>} />
+            <Route path="contracts" element={<RequireRole roles={ROLE_MANAGER}><ContractsPage /></RequireRole>} />
+            <Route path="stock" element={<RequireRole roles={ROLE_EMPLOYEE}><StockPage /></RequireRole>} />
+            <Route path="stock-families" element={<RequireRole roles={ROLE_EMPLOYEE}><StockFamiliesPage /></RequireRole>} />
+            <Route path="stock-movements" element={<RequireRole roles={ROLE_EMPLOYEE}><StockMovementsPage /></RequireRole>} />
+            <Route path="materials" element={<RequireRole roles={ROLE_EMPLOYEE}><MaterialsPage /></RequireRole>} />
+            <Route path="purchases" element={<RequireRole roles={ROLE_MANAGER}><PurchasesPage /></RequireRole>} />
+            <Route path="expenses" element={<RequireRole roles={ROLE_MANAGER}><ExpensesPage /></RequireRole>} />
+            <Route path="invoices" element={<RequireRole roles={ROLE_MANAGER}><InvoicesPage /></RequireRole>} />
+            <Route path="payments" element={<RequireRole roles={ROLE_MANAGER}><PaymentsPage /></RequireRole>} />
+            <Route path="suppliers" element={<RequireRole roles={ROLE_MANAGER}><SuppliersPage /></RequireRole>} />
+            <Route path="clients" element={<RequireRole roles={ROLE_MANAGER}><ClientsPage /></RequireRole>} />
+            <Route path="vehicles" element={<RequireRole roles={ROLE_MANAGER}><VehiclesPage /></RequireRole>} />
+            <Route path="locations" element={<RequireRole roles={ROLE_MANAGER}><LocationsPage /></RequireRole>} />
+            <Route path="documents" element={<RequireRole roles={ROLE_EMPLOYEE}><DocumentsPage /></RequireRole>} />
+            <Route path="rapports" element={<RequireRole roles={ROLE_ALL}><RapportsPage /></RequireRole>} />
+            <Route path="rapports/activite" element={<RequireRole roles={ROLE_ALL}><RapportActivitePage /></RequireRole>} />
+            <Route path="rapports/stock" element={<RequireRole roles={ROLE_ALL}><RapportStockPage /></RequireRole>} />
+            <Route path="rapports/chantier/:id" element={<RequireRole roles={ROLE_ALL}><ChantierDetailPage /></RequireRole>} />
+            <Route path="rapports/employe/:id" element={<RequireRole roles={ROLE_ALL}><EmployeDetailPage /></RequireRole>} />
+            <Route path="rapports/vehicule/:id" element={<RequireRole roles={ROLE_ALL}><VehiculeDetailPage /></RequireRole>} />
+            <Route path="notifications" element={<RequireRole roles={ROLE_ALL}><NotificationsPage /></RequireRole>} />
+            <Route path="users" element={<RequireRole roles={ROLE_MANAGER}><UsersPage /></RequireRole>} />
+            <Route path="sync" element={<RequireRole roles={ROLE_MANAGER}><SyncPage /></RequireRole>} />
+            <Route path="settings" element={<RequireRole roles={ROLE_MANAGER}><SettingsPage /></RequireRole>} />
           </Route>
         )}
 

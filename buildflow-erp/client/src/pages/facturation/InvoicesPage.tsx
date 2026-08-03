@@ -33,6 +33,7 @@ const formFields: FormField[] = [
 
 export default function InvoicesPage() {
   const [data, setData] = useState<any[]>([]);
+  const [companyData, setCompanyData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
@@ -42,19 +43,35 @@ export default function InvoicesPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const { data: res } = await api.get('/modules/invoices', { limit: 200 });
-      if (res.success) setData(res.data.items);
+      const [invRes, compRes] = await Promise.all([
+        api.get('/modules/invoices', { limit: 200 }),
+        api.get('/settings/company'),
+      ]);
+      if (invRes.data.success) setData(invRes.data.data.items);
+      if (compRes.data.success) setCompanyData(compRes.data.data);
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
   useEffect(() => { loadData(); }, []);
 
+  const pdfCompany = companyData || company;
+
   const handleSubmit = async (formData: Record<string, any>) => {
     setSaving(true);
     try {
-      if (editItem) await api.put(`/modules/invoices/${editItem.id}`, formData);
-      else await api.post('/modules/invoices', formData);
+      let created: any = null;
+      if (editItem) {
+        await api.put(`/modules/invoices/${editItem.id}`, formData);
+      } else {
+        const { data: res } = await api.post('/modules/invoices', formData);
+        if (res.success) created = res.data;
+      }
       setDialogOpen(false); setEditItem(null); loadData();
+
+      if (created) {
+        const doc = generateSingleInvoicePdf(created, pdfCompany);
+        downloadPdf(doc, `facture-${created.number}-${new Date().toISOString().slice(0, 10)}.pdf`);
+      }
     } catch (error) { console.error(error); } finally { setSaving(false); }
   };
 
@@ -66,9 +83,9 @@ export default function InvoicesPage() {
     const doc = generatePdf({
       title: 'Liste des Factures',
       subtitle: `${rows.length} facture(s)`,
-      companyName: company?.name || 'BuildFlow ERP',
-      companyLogo: company?.logo,
-      primaryColor: company?.primaryColor,
+      companyName: pdfCompany?.name || 'BuildFlow ERP',
+      companyLogo: pdfCompany?.logo,
+      primaryColor: pdfCompany?.primaryColor,
       columns: [
         { header: 'N°', dataKey: 'number', width: 30 },
         { header: 'Date', dataKey: 'date', width: 25 },
@@ -85,13 +102,13 @@ export default function InvoicesPage() {
         paidAmount: r.paidAmount,
         status: STATUS_OPTIONS.find((s) => s.value === r.status)?.label || r.status,
       })),
-      footer: `${company?.name || 'BuildFlow ERP'} — Facturation`,
+      footer: `${pdfCompany?.name || 'BuildFlow ERP'} — Facturation`,
     });
     downloadPdf(doc, `factures-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleSinglePdf = (row: any) => {
-    const doc = generateSingleInvoicePdf(row, company);
+    const doc = generateSingleInvoicePdf(row, pdfCompany);
     downloadPdf(doc, `facture-${row.number}-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
@@ -100,6 +117,7 @@ export default function InvoicesPage() {
 
   const columns: Column<any>[] = [
     { id: 'number', label: 'N°', sortable: true, render: (row) => <Chip label={row.number} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} /> },
+    { id: 'client', label: 'Client', render: (row) => row.client?.name || '—' },
     { id: 'date', label: 'Date', render: (row) => new Date(row.date).toLocaleDateString('fr-FR') },
     { id: 'dueDate', label: 'Échéance', render: (row) => row.dueDate ? new Date(row.dueDate).toLocaleDateString('fr-FR') : '—' },
     { id: 'total', label: 'Total', align: 'right', render: (row) => new Intl.NumberFormat('fr-FR').format(row.total) + ' FCFA' },

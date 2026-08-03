@@ -3,11 +3,12 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Grid, MenuItem, CircularProgress,
 } from '@mui/material';
+import FileUpload from './FileUpload';
 
 export interface FormField {
   name: string;
   label: string;
-  type?: 'text' | 'number' | 'email' | 'password' | 'select' | 'date' | 'textarea';
+  type?: 'text' | 'number' | 'email' | 'password' | 'select' | 'date' | 'textarea' | 'upload';
   required?: boolean;
   options?: { value: string; label: string }[];
   defaultValue?: any;
@@ -16,6 +17,8 @@ export interface FormField {
   rows?: number;
   disabled?: boolean;
   helperText?: string;
+  uploadType?: 'image' | 'file';
+  multiple?: boolean;
 }
 
 interface FormDialogProps {
@@ -84,6 +87,14 @@ export default function FormDialog({ open, title, fields, values, loading, maxWi
                     rows={field.rows || 3}
                     disabled={field.disabled}
                     helperText={field.helperText}
+                  />
+                ) : field.type === 'upload' ? (
+                  <FileUpload
+                    label={field.label}
+                    type={field.uploadType || 'image'}
+                    multiple={field.multiple}
+                    value={formData[field.name] || (field.multiple ? [] : null)}
+                    onChange={(url) => update(field.name, url)}
                   />
                 ) : (
                   <TextField

@@ -69,6 +69,7 @@ export class SuperAdminService {
           directorName: `${data.directorFirstName} ${data.directorLastName}`,
           logo: data.logo,
           address: data.address,
+          maxUsers: data.maxUsers,
         },
       });
 
@@ -126,6 +127,7 @@ export class SuperAdminService {
         currency: data.currency,
         language: data.language,
         timezone: data.timezone,
+        maxUsers: data.maxUsers,
       },
     });
 
@@ -269,7 +271,7 @@ export class SuperAdminService {
         isSuperAdmin: true,
         lastLoginAt: true,
         createdAt: true,
-        company: { select: { id: true, name: true } },
+        company: { select: { id: true, name: true, maxUsers: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

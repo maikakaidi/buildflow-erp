@@ -86,6 +86,7 @@ export class AuthService {
         phoneCode: result.user.phoneCode,
         role: result.user.role,
         isSuperAdmin: result.user.isSuperAdmin,
+        companyId: result.user.companyId,
       },
       company: {
         id: result.company.id,
@@ -94,6 +95,10 @@ export class AuthService {
         logo: result.company.logo,
         primaryColor: result.company.primaryColor,
         secondaryColor: result.company.secondaryColor,
+        currency: result.company.currency,
+        language: result.company.language,
+        timezone: result.company.timezone,
+        maxUsers: result.company.maxUsers,
       },
       ...tokens,
     };
@@ -151,6 +156,7 @@ export class AuthService {
         phoneCode: user.phoneCode,
         role: user.role,
         isSuperAdmin: user.isSuperAdmin,
+        companyId: user.companyId,
       },
       company: user.company
         ? {
@@ -162,6 +168,8 @@ export class AuthService {
             secondaryColor: user.company.secondaryColor,
             currency: user.company.currency,
             language: user.company.language,
+            timezone: user.company.timezone,
+            maxUsers: user.company.maxUsers,
           }
         : null,
       ...tokens,

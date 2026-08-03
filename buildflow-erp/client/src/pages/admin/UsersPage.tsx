@@ -4,7 +4,7 @@ import {
   IconButton, Chip, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Grid, MenuItem, Skeleton, Avatar, Typography, alpha, useTheme,
 } from '@mui/material';
-import { Add, Edit, LockReset, People, ToggleOff, ToggleOn, Delete } from '@mui/icons-material';
+import { Add, Edit, LockReset, People, ToggleOff, ToggleOn, Delete, Save, GroupAdd } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import PageHeader from '../../components/common/PageHeader';
 import api from '../../api/client';
@@ -15,6 +15,8 @@ export default function SuperAdminUsersPage() {
   const theme = useTheme();
   const [users, setUsers] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
+  const [limits, setLimits] = useState<Record<string, string>>({});
+  const [savingLimit, setSavingLimit] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', phoneCode: '+227', password: '', role: 'EMPLOYEE', companyId: '' });
@@ -34,6 +36,34 @@ export default function SuperAdminUsersPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    setLimits((prev) => {
+      const next: Record<string, string> = { ...prev };
+      companies.forEach((c: any) => {
+        if (c.id && next[c.id] === undefined) next[c.id] = String(c.maxUsers ?? 3);
+      });
+      return next;
+    });
+  }, [companies]);
+
+  const handleSaveLimit = async (companyId: string) => {
+    const value = parseInt(limits[companyId] || '3', 10);
+    if (isNaN(value) || value < 1) return toast.error('Limite invalide');
+    setSavingLimit(companyId);
+    try {
+      await api.put(`/super-admin/companies/${companyId}`, { maxUsers: value });
+      toast.success('Limite mise à jour');
+      setCompanies((prev) => prev.map((c: any) => c.id === companyId ? { ...c, maxUsers: value } : c));
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur');
+    } finally { setSavingLimit(null); }
+  };
+
+  const userCountByCompany = users.reduce<Record<string, number>>((acc, u: any) => {
+    if (u.companyId) acc[u.companyId] = (acc[u.companyId] || 0) + 1;
+    return acc;
+  }, {});
 
   const handleCreate = async () => {
     if (!form.firstName || !form.lastName || !form.phone || !form.password || !form.companyId) {
@@ -147,6 +177,66 @@ export default function SuperAdminUsersPage() {
                     </TableCell>
                   </TableRow>
                 )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
+      )}
+
+      {!loading && companies.length > 0 && (
+        <Card sx={{ mt: 3 }}>
+          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <GroupAdd color="primary" />
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700}>Limite d'utilisateurs par entreprise</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Nombre maximum d'utilisateurs actifs autorisés avant facturation (20 000 FCFA / extra).
+              </Typography>
+            </Box>
+          </Box>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Entreprise</TableCell>
+                  <TableCell align="center">Utilisateurs actifs</TableCell>
+                  <TableCell align="center">Limite max</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {companies.map((c: any) => {
+                  const current = userCountByCompany[c.id] || 0;
+                  const limit = parseInt(limits[c.id] || String(c.maxUsers ?? 3), 10);
+                  const atLimit = current >= limit;
+                  return (
+                    <TableRow key={c.id} hover>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={600}>{c.name}</Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip label={`${current}`} size="small" color={atLimit ? 'warning' : 'success'} variant="outlined" />
+                      </TableCell>
+                      <TableCell align="center" sx={{ width: 160 }}>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={limits[c.id] ?? String(c.maxUsers ?? 3)}
+                          onChange={(e) => setLimits({ ...limits, [c.id]: e.target.value })}
+                          inputProps={{ min: 1, style: { textAlign: 'center' } }}
+                          sx={{ width: 90 }}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Enregistrer la limite">
+                          <IconButton size="small" color="primary" disabled={savingLimit === c.id} onClick={() => handleSaveLimit(c.id)}>
+                            {savingLimit === c.id ? <Skeleton width={18} /> : <Save fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>

@@ -24,7 +24,7 @@ router.use('/presences', createCrudRoutes(prisma.presence));
 router.use('/salaries', createCrudRoutes(prisma.salary));
 router.use('/purchases', createCrudRoutes(prisma.purchase));
 router.use('/expenses', createCrudRoutes(prisma.expense));
-router.use('/invoices', createCrudRoutes(prisma.invoice));
+router.use('/invoices', createCrudRoutes(prisma.invoice, { client: true, payments: true }));
 router.use('/payments', createCrudRoutes(prisma.payment));
 router.use('/daily-reports', createCrudRoutes(prisma.dailyReport));
 router.use('/notifications', createCrudRoutes(prisma.notification));

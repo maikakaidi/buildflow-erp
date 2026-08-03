@@ -5,6 +5,8 @@ import PageHeader from '../../components/common/PageHeader';
 import DataTable, { Column } from '../../components/common/DataTable';
 import FormDialog, { FormField } from '../../components/common/FormDialog';
 import api from '../../api/client';
+import { useOfflineData } from '../../hooks/useOfflineData';
+import { useNetwork } from '../../hooks/useNetwork';
 
 const TYPE_OPTIONS = [
   { value: 'ENTREE', label: 'Entrée' },
@@ -18,6 +20,9 @@ export default function StockMovementsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const { isOnline } = useNetwork();
+  const offlineData = useOfflineData('stockMovements');
+  const offlineItems = useOfflineData('stockItems');
 
   const loadData = async () => {
     try {
@@ -28,7 +33,14 @@ export default function StockMovementsPage() {
       ]);
       if (movRes.data.success) setData(movRes.data.data.items);
       if (itemRes.data.success) setItems(itemRes.data.data.items);
-    } catch (error) { console.error(error); } finally { setLoading(false); }
+    } catch {
+      if (!isOnline) {
+        await offlineData.refresh();
+        setData(offlineData.data);
+        await offlineItems.refresh();
+        setItems(offlineItems.data);
+      }
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { loadData(); }, []);
@@ -36,14 +48,23 @@ export default function StockMovementsPage() {
   const handleSubmit = async (formData: Record<string, any>) => {
     setSaving(true);
     try {
-      if (editItem) await api.put(`/modules/stock-movements/${editItem.id}`, formData);
-      else await api.post('/modules/stock-movements', formData);
+      if (isOnline) {
+        if (editItem) await api.put(`/modules/stock-movements/${editItem.id}`, formData);
+        else await api.post('/modules/stock-movements', formData);
+      } else {
+        if (editItem) await offlineData.update(editItem.id, formData);
+        else await offlineData.add(formData);
+      }
       setDialogOpen(false); setEditItem(null); loadData();
     } catch (error) { console.error(error); } finally { setSaving(false); }
   };
 
   const handleDelete = async (row: any) => {
-    try { await api.delete(`/modules/stock-movements/${row.id}`); loadData(); } catch (error) { console.error(error); }
+    try {
+      if (isOnline) await api.delete(`/modules/stock-movements/${row.id}`);
+      else await offlineData.remove(row.id);
+      loadData();
+    } catch (error) { console.error(error); }
   };
 
   const formFields: FormField[] = [
@@ -71,16 +92,18 @@ export default function StockMovementsPage() {
     { id: 'notes', label: 'Notes', render: (row) => row.notes || '—' },
   ];
 
-  const entrees = data.filter((m: any) => m.type === 'ENTREE').reduce((s: number, m: any) => s + m.quantity, 0);
-  const sorties = data.filter((m: any) => m.type === 'SORTIE').reduce((s: number, m: any) => s + m.quantity, 0);
+  const displayData = isOnline ? data : (offlineData.data.length > 0 ? offlineData.data : data);
+
+  const entrees = displayData.filter((m: any) => m.type === 'ENTREE').reduce((s: number, m: any) => s + m.quantity, 0);
+  const sorties = displayData.filter((m: any) => m.type === 'SORTIE').reduce((s: number, m: any) => s + m.quantity, 0);
 
   return (
     <Box>
-      <PageHeader title="Mouvements de stock" subtitle={`${data.length} mouvement(s) — Entrées: ${entrees}, Sorties: ${sorties}`}
+      <PageHeader title="Mouvements de stock" subtitle={`${displayData.length} mouvement(s) — Entrées: ${entrees}, Sorties: ${sorties}`}
         action={{ label: 'Nouveau mouvement', onClick: () => { setEditItem(null); setDialogOpen(true); } }}
         onRefresh={loadData}
       />
-      <DataTable columns={columns} data={data} loading={loading}
+      <DataTable columns={columns} data={displayData} loading={loading}
         searchFields={['reference', 'notes']}
         onEdit={(row) => { setEditItem(row); setDialogOpen(true); }} onDelete={handleDelete}
       />

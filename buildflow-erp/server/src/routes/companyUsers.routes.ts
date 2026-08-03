@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireRole } from '../middleware/auth';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
@@ -21,18 +21,21 @@ router.get('/', async (req: AuthRequest, res: any, next: any) => {
   } catch (error) { next(error); }
 });
 
-router.post('/', async (req: AuthRequest, res: any, next: any) => {
+router.post('/', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: any, next: any) => {
   try {
     const companyId = req.user!.companyId;
     if (!companyId) return res.status(400).json({ success: false, message: 'Entreprise requise' });
 
+    const company = await prisma.company.findUnique({ where: { id: companyId }, select: { maxUsers: true } });
+    const maxUsers = company?.maxUsers ?? 3;
+
     const activeCount = await prisma.user.count({ where: { companyId, isSuperAdmin: false, isActive: true } });
-    if (activeCount >= 3) {
+    if (activeCount >= maxUsers) {
       return res.status(403).json({
         success: false,
-        message: 'Limite de 3 utilisateurs gratuits atteinte. Payez 20 000 FCFA sur WhatsApp (Moov 99293329 ou Airtel 92666942) pour ajouter un utilisateur supplémentaire.',
+        message: `Limite de ${maxUsers} utilisateurs atteinte. Payez 20 000 FCFA sur WhatsApp (Airtel 99293329 ou Orange 92666942) pour ajouter un utilisateur supplémentaire.`,
         limitReached: true,
-        paymentInfo: { moov: '99293329', airtel: '92666942', amount: '20 000 FCFA' },
+        paymentInfo: { moov: '99293329', airtel: '92666942', amount: '20 000 FCFA', maxUsers },
       });
     }
 
@@ -53,7 +56,7 @@ router.post('/', async (req: AuthRequest, res: any, next: any) => {
   }
 });
 
-router.put('/:id', async (req: AuthRequest, res: any, next: any) => {
+router.put('/:id', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: any, next: any) => {
   try {
     const companyId = req.user!.companyId;
     const { id } = req.params;
@@ -71,7 +74,7 @@ router.put('/:id', async (req: AuthRequest, res: any, next: any) => {
   } catch (error) { next(error); }
 });
 
-router.delete('/:id', async (req: AuthRequest, res: any, next: any) => {
+router.delete('/:id', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: any, next: any) => {
   try {
     const companyId = req.user!.companyId;
     const { id } = req.params;

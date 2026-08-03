@@ -22,6 +22,7 @@ const SYNC_ENTITIES = [
   'locations',
   'contracts',
   'documents',
+  'stockMovements',
 ] as const;
 
 type SyncEntity = typeof SYNC_ENTITIES[number];
@@ -44,14 +45,82 @@ const ENTITY_MODELS: Record<string, any> = {
   locations: () => prisma.location,
   contracts: () => prisma.contract,
   documents: () => prisma.document,
+  stockMovements: () => prisma.stockMovement,
 };
+
+const ENTITY_MODEL_NAMES: Record<string, string> = {
+  chantiers: 'Chantier',
+  employees: 'Employee',
+  workers: 'Worker',
+  suppliers: 'Supplier',
+  clients: 'Client',
+  stockItems: 'StockItem',
+  stockFamilies: 'StockFamily',
+  materials: 'Material',
+  vehicles: 'Vehicle',
+  purchases: 'Purchase',
+  expenses: 'Expense',
+  presences: 'Presence',
+  salaries: 'Salary',
+  dailyReports: 'DailyReport',
+  locations: 'Location',
+  contracts: 'Contract',
+  documents: 'Document',
+  stockMovements: 'StockMovement',
+};
+
+const rm = (prisma as any)._runtimeDataModel;
+const MODEL_SCALARS: Record<string, Set<string>> = {};
+const MODEL_NUMERIC: Record<string, Set<string>> = {};
+const MODEL_DATES: Record<string, Set<string>> = {};
+const MODEL_SOFT_DELETE = new Set<string>();
+
+for (const [name, model] of Object.entries(rm.models as Record<string, any>)) {
+  const scalars = new Set<string>();
+  const numeric = new Set<string>();
+  const dates = new Set<string>();
+  for (const field of model.fields) {
+    if (field.kind !== 'scalar' && field.kind !== 'enum' && field.kind !== 'json') continue;
+    scalars.add(field.name);
+    if (field.type === 'Int' || field.type === 'Float') numeric.add(field.name);
+    if (field.type === 'DateTime') dates.add(field.name);
+    if (field.name === 'deletedAt') MODEL_SOFT_DELETE.add(name);
+  }
+  MODEL_SCALARS[name] = scalars;
+  MODEL_NUMERIC[name] = numeric;
+  MODEL_DATES[name] = dates;
+}
+
+function sanitizeItem(modelName: string, item: any): Record<string, any> {
+  const scalars = MODEL_SCALARS[modelName] || new Set<string>();
+  const numeric = MODEL_NUMERIC[modelName] || new Set<string>();
+  const dates = MODEL_DATES[modelName] || new Set<string>();
+  const out: Record<string, any> = {};
+  for (const key of scalars) {
+    if (key === 'id' || key === 'companyId' || key === 'deletedAt' || key === 'updatedAt') continue;
+    const value = item[key];
+    if (value === undefined || value === null || value === '') continue;
+    if (numeric.has(key) && typeof value === 'string') {
+      const n = Number(value);
+      if (!isNaN(n)) { out[key] = n; continue; }
+      continue;
+    }
+    if (dates.has(key) && typeof value === 'string') {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) { out[key] = d; continue; }
+      continue;
+    }
+    out[key] = value;
+  }
+  return out;
+}
 
 export class SyncController {
   static async push(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const companyId = req.user!.companyId;
       if (!companyId) {
-        return res.json({ success: true, data: { created: 0, updated: 0, conflicts: 0, results: [] } });
+        return res.json({ success: true, data: { created: 0, updated: 0, deleted: 0, conflicts: 0, results: [] } });
       }
 
       const { entity, items } = req.body;
@@ -64,22 +133,44 @@ export class SyncController {
         throw new AppError('Items requis', 400);
       }
 
-      const results = [];
+      const results: any[] = [];
       let conflicts = 0;
       let created = 0;
       let updated = 0;
+      let deleted = 0;
 
       for (const item of items) {
         try {
           const model = ENTITY_MODELS[entity]();
+          const modelName = ENTITY_MODEL_NAMES[entity];
+          const action = item.action || (item.serverId ? 'update' : 'create');
+
+          if (action === 'delete') {
+            if (!item.serverId) {
+              results.push({ id: item.localId, status: 'deleted' });
+              continue;
+            }
+            const existing = await model.findFirst({ where: { id: item.serverId, companyId } });
+            if (existing) {
+              if (MODEL_SOFT_DELETE.has(modelName)) {
+                await model.update({ where: { id: item.serverId }, data: { deletedAt: new Date(), updatedAt: new Date() } });
+              } else {
+                await model.delete({ where: { id: item.serverId } });
+              }
+            }
+            deleted++;
+            results.push({ id: item.serverId, status: 'deleted' });
+            continue;
+          }
+
+          const data = sanitizeItem(modelName, item);
 
           if (item.serverId) {
-            const existing = await model.findFirst({
-              where: { id: item.serverId, companyId },
-            });
+            const existing = await model.findFirst({ where: { id: item.serverId, companyId } });
 
             if (existing) {
-              if (existing.updatedAt > new Date(item.updatedAt)) {
+              const clientUpdatedAt = item.updatedAt ? new Date(item.updatedAt) : new Date(0);
+              if (existing.updatedAt && existing.updatedAt > clientUpdatedAt) {
                 conflicts++;
                 await prisma.syncConflict.create({
                   data: {
@@ -95,25 +186,22 @@ export class SyncController {
                 continue;
               }
 
-              const { localId, serverId, ...updateData } = item;
               await model.update({
                 where: { id: item.serverId },
-                data: { ...updateData, updatedAt: new Date() },
+                data: { ...data, updatedAt: new Date() },
               });
               updated++;
               results.push({ id: item.serverId, status: 'updated' });
             } else {
-              const { localId, serverId, ...createData } = item;
               const created_item = await model.create({
-                data: { ...createData, companyId, id: item.serverId },
+                data: { ...data, companyId, id: item.serverId },
               });
               created++;
               results.push({ id: created_item.id, status: 'created', localId: item.localId });
             }
           } else {
-            const { localId, ...createData } = item;
             const created_item = await model.create({
-              data: { ...createData, companyId },
+              data: { ...data, companyId },
             });
             created++;
             results.push({ id: created_item.id, status: 'created', localId: item.localId });
@@ -134,13 +222,14 @@ export class SyncController {
         },
       });
 
-      logger.info(`Sync push: ${entity} - ${created} créés, ${updated} mis à jour, ${conflicts} conflits`);
+      logger.info(`Sync push: ${entity} - ${created} créés, ${updated} mis à jour, ${deleted} supprimés, ${conflicts} conflits`);
 
       res.json({
         success: true,
         data: {
           created,
           updated,
+          deleted,
           conflicts,
           results,
         },
@@ -271,18 +360,18 @@ export class SyncController {
 
       if (!conflict) throw new AppError('Conflit introuvable', 404);
 
+      const modelName = ENTITY_MODEL_NAMES[conflict.entity];
       const model = ENTITY_MODELS[conflict.entity];
       if (model && conflict.entityId) {
         if (resolution === 'server') {
           await model().update({
             where: { id: conflict.entityId },
-            data: conflict.serverData as any,
+            data: sanitizeItem(modelName, conflict.serverData as any),
           });
         } else if (resolution === 'client') {
-          const { localId, serverId, ...data } = conflict.localData as any;
           await model().update({
             where: { id: conflict.entityId },
-            data,
+            data: sanitizeItem(modelName, conflict.localData as any),
           });
         }
       }
