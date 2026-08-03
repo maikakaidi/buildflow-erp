@@ -26,10 +26,10 @@ export default function EmployeDetailPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  const handlePdf = () => {
+  const handlePdf = async () => {
     if (!employe) return;
     const taux = presences.length > 0 ? Math.round((presences.filter((p: any) => p.status === 'PRESENT').length / presences.length) * 100) : 0;
-    const doc = generatePdf({
+    const doc = await generatePdf({
       title: `Fiche employé: ${employe.firstName} ${employe.lastName}`,
       companyName: company?.name,
       companyLogo: company?.logo,

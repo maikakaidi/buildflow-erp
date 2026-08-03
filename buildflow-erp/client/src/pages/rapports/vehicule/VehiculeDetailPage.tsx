@@ -25,10 +25,10 @@ export default function VehiculeDetailPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  const handlePdf = () => {
+  const handlePdf = async () => {
     if (!vehicule) return;
     const totalLocation = locations.reduce((s: number, l: any) => s + (l.totalAmount || 0), 0);
-    const doc = generatePdf({
+    const doc = await generatePdf({
       title: `Fiche véhicule: ${vehicule.brand} ${vehicule.model}`,
       subtitle: `Plaque: ${vehicule.plateNumber}`,
       companyName: company?.name,

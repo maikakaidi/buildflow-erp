@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Grid, MenuItem, CircularProgress,
@@ -34,16 +34,20 @@ interface FormDialogProps {
 
 export default function FormDialog({ open, title, fields, values, loading, maxWidth = 'md', onClose, onSubmit }: FormDialogProps) {
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const prevOpen = useRef(open);
 
   useEffect(() => {
-    if (values) {
-      setFormData(values);
-    } else {
-      const defaults: Record<string, any> = {};
-      fields.forEach((f) => { defaults[f.name] = f.defaultValue || ''; });
-      setFormData(defaults);
+    if (open && !prevOpen.current) {
+      if (values) {
+        setFormData(values);
+      } else {
+        const defaults: Record<string, any> = {};
+        fields.forEach((f) => { defaults[f.name] = f.defaultValue || ''; });
+        setFormData(defaults);
+      }
     }
-  }, [values, fields, open]);
+    prevOpen.current = open;
+  }, [open]);
 
   const update = (name: string, value: any) => setFormData((prev) => ({ ...prev, [name]: value }));
 

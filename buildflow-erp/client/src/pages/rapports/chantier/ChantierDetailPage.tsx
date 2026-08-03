@@ -31,9 +31,9 @@ export default function ChantierDetailPage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  const handlePdf = () => {
+  const handlePdf = async () => {
     if (!chantier) return;
-    const doc = generatePdf({
+    const doc = await generatePdf({
       title: `Chantier: ${chantier.name}`,
       subtitle: `Code: ${chantier.code || '—'} | ${STATUS_LABELS[chantier.status] || chantier.status}`,
       companyName: company?.name,

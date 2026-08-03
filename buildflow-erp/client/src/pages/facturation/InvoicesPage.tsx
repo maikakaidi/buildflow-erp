@@ -69,7 +69,7 @@ export default function InvoicesPage() {
       setDialogOpen(false); setEditItem(null); loadData();
 
       if (created) {
-        const doc = generateSingleInvoicePdf(created, pdfCompany);
+        const doc = await generateSingleInvoicePdf(created, pdfCompany);
         downloadPdf(doc, `facture-${created.number}-${new Date().toISOString().slice(0, 10)}.pdf`);
       }
     } catch (error) { console.error(error); } finally { setSaving(false); }
@@ -79,8 +79,8 @@ export default function InvoicesPage() {
     try { await api.delete(`/modules/invoices/${row.id}`); loadData(); } catch (error) { console.error(error); }
   };
 
-  const handleExportPdf = (rows: any[]) => {
-    const doc = generatePdf({
+  const handleExportPdf = async (rows: any[]) => {
+    const doc = await generatePdf({
       title: 'Liste des Factures',
       subtitle: `${rows.length} facture(s)`,
       companyName: pdfCompany?.name || 'BuildFlow ERP',
@@ -107,8 +107,8 @@ export default function InvoicesPage() {
     downloadPdf(doc, `factures-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
-  const handleSinglePdf = (row: any) => {
-    const doc = generateSingleInvoicePdf(row, pdfCompany);
+  const handleSinglePdf = async (row: any) => {
+    const doc = await generateSingleInvoicePdf(row, pdfCompany);
     downloadPdf(doc, `facture-${row.number}-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 

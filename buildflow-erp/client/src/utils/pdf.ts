@@ -21,7 +21,7 @@ interface PdfOptions {
   showHeader?: boolean;
 }
 
-export function generatePdf(options: PdfOptions) {
+export async function generatePdf(options: PdfOptions) {
   const { title, subtitle, columns, data, companyName, companyLogo, primaryColor, footer, orientation = 'portrait', showHeader = true } = options;
 
   const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
@@ -33,9 +33,12 @@ export function generatePdf(options: PdfOptions) {
 
   if (showHeader) {
     if (companyLogo) {
-      try {
-        doc.addImage(companyLogo, 'JPEG', margin, y, 30, 10);
-      } catch {}
+      const logoDataUrl = await loadImageAsDataUrl(companyLogo);
+      if (logoDataUrl) {
+        try {
+          doc.addImage(logoDataUrl, getImageFormat(companyLogo), margin, y, 30, 10);
+        } catch {}
+      }
     }
     if (companyName) {
       doc.setFontSize(10);
@@ -122,7 +125,7 @@ function hexToRgb(hex: string): [number, number, number] | null {
   return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null;
 }
 
-export function generateSingleInvoicePdf(invoice: any, company?: any) {
+export async function generateSingleInvoicePdf(invoice: any, company?: any) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -134,7 +137,10 @@ export function generateSingleInvoicePdf(invoice: any, company?: any) {
   const logo = company?.logoPdf || company?.logo;
 
   if (logo) {
-    try { doc.addImage(logo, getImageFormat(logo), margin, y, 42, 16); } catch {}
+    const logoDataUrl = await loadImageAsDataUrl(logo);
+    if (logoDataUrl) {
+      try { doc.addImage(logoDataUrl, getImageFormat(logo), margin, y, 42, 16); } catch {}
+    }
   }
 
   doc.setFont('helvetica', 'bold');
@@ -299,10 +305,16 @@ export function generateSingleInvoicePdf(invoice: any, company?: any) {
   }
 
   if (company?.signature) {
-    try { doc.addImage(company.signature, getImageFormat(company.signature), pageWidth - margin - 45, sigY - 16, 45, 14); } catch {}
+    const sigDataUrl = await loadImageAsDataUrl(company.signature);
+    if (sigDataUrl) {
+      try { doc.addImage(sigDataUrl, getImageFormat(company.signature), pageWidth - margin - 45, sigY - 16, 45, 14); } catch {}
+    }
   }
   if (company?.stamp) {
-    try { doc.addImage(company.stamp, getImageFormat(company.stamp), pageWidth - margin - 20, sigY - 22, 20, 20); } catch {}
+    const stampDataUrl = await loadImageAsDataUrl(company.stamp);
+    if (stampDataUrl) {
+      try { doc.addImage(stampDataUrl, getImageFormat(company.stamp), pageWidth - margin - 20, sigY - 22, 20, 20); } catch {}
+    }
   }
 
   const pageCount = doc.getNumberOfPages();
@@ -321,4 +333,41 @@ function getImageFormat(url: string): string {
   if (clean.endsWith('.png')) return 'PNG';
   if (clean.endsWith('.webp') || clean.endsWith('.svg')) return 'PNG';
   return 'JPEG';
+}
+
+const MAX_IMAGE_DIM = 900;
+
+async function loadImageAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const objectUrl = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, MAX_IMAGE_DIM / Math.max(img.naturalWidth, img.naturalHeight));
+          const w = Math.max(1, Math.round(img.naturalWidth * scale));
+          const h = Math.max(1, Math.round(img.naturalHeight * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, w, h);
+          const isPng = getImageFormat(url) === 'PNG';
+          const dataUrl = ctx ? canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.85) : null;
+          URL.revokeObjectURL(objectUrl);
+          resolve(dataUrl);
+        } catch {
+          URL.revokeObjectURL(objectUrl);
+          resolve(null);
+        }
+      };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(null); };
+      img.src = objectUrl;
+    });
+  } catch {
+    return null;
+  }
 }

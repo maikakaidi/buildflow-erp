@@ -50,8 +50,8 @@ export default function RapportActivitePage() {
     return { ...c, totalDepense: chExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0), nbPresences: chPresences.length, nbEmployees: chEmployees.length };
   });
 
-  const handlePdf = () => {
-    const doc = generatePdf({
+  const handlePdf = async () => {
+    const doc = await generatePdf({
       title: "Rapport d'activité",
       subtitle: `${chantiers.length} chantier(s), ${employees.length} employé(s)`,
       companyName: company?.name,

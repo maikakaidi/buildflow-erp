@@ -27,8 +27,8 @@ export default function RapportStockPage() {
   const entrees = movements.filter((m: any) => m.type === 'ENTREE').reduce((s: number, m: any) => s + (m.quantity || 0), 0);
   const sorties = movements.filter((m: any) => m.type === 'SORTIE').reduce((s: number, m: any) => s + (m.quantity || 0), 0);
 
-  const handlePdf = () => {
-    const doc = generatePdf({
+  const handlePdf = async () => {
+    const doc = await generatePdf({
       title: 'Rapport de stock',
       subtitle: `${items.length} article(s), ${lowStock.length} alerte(s)`,
       companyName: company?.name,

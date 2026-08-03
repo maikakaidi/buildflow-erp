@@ -58,8 +58,8 @@ export default function DailyReportsPage() {
     { name: 'photos', label: 'Photos (URLs séparées par des virgules)', gridSize: 12 },
   ];
 
-  const handlePdf = (rows: any[]) => {
-    const doc = generatePdf({
+  const handlePdf = async (rows: any[]) => {
+    const doc = await generatePdf({
       title: 'Rapports journaliers',
       subtitle: `${rows.length} rapport(s)`,
       companyName: company?.name,

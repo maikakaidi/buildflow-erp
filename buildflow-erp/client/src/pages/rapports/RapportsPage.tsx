@@ -90,8 +90,8 @@ export default function RapportsPage() {
       <PageHeader
         title="Rapports"
         subtitle="Analyse et statistiques"
-        action={{ label: 'Exporter PDF', icon: <GetApp />, onClick: () => {
-          const doc = generatePdf({
+        action={{ label: 'Exporter PDF', icon: <GetApp />, onClick: async () => {
+          const doc = await generatePdf({
             title: 'Rapport financier',
             subtitle: `${data.expenses.length} dépenses, ${data.purchases.length} achats`,
             companyName: company?.name,
