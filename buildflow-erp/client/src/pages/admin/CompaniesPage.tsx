@@ -202,7 +202,7 @@ export default function CompaniesPage() {
                       <TableCell><Chip label={c._count?.users || 0} size="small" color="primary" variant="outlined" /></TableCell>
                       <TableCell>
                         <Chip label={status.label} size="small" color={status.color} variant="outlined" />
-                        <Typography variant="caption" color="text.secondary" display="block">{sub?.plan === 'PAID' ? 'Hébergé' : sub?.plan || 'N/A'}</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">{sub?.plan === 'PAID' ? 'Hébergé' : sub?.plan === 'TRIAL' ? 'Essai' : sub?.plan || 'N/A'}</Typography>
                       </TableCell>
                       <TableCell>
                         {sub?.endDate ? (
@@ -223,10 +223,10 @@ export default function CompaniesPage() {
                       </TableCell>
                       <TableCell align="right">
                         <Tooltip title="Modifier"><IconButton size="small" onClick={() => handleOpen(c)}><Edit fontSize="small" /></IconButton></Tooltip>
-                        {sub?.status === 'SUSPENDED' || sub?.status === 'EXPIRED' || !sub ? (
-                          <Tooltip title="Activer hébergement (1an)"><IconButton size="small" color="success" onClick={() => handleRenew(c.id, 365)}><PlayArrow fontSize="small" /></IconButton></Tooltip>
-                        ) : (
+                        {sub?.plan === 'PAID' && sub?.status === 'ACTIVE' ? (
                           <Tooltip title="Suspendre"><IconButton size="small" color="warning" onClick={() => handleSuspend(c.id)}><Pause fontSize="small" /></IconButton></Tooltip>
+                        ) : (
+                          <Tooltip title="Activer hébergement (1an)"><IconButton size="small" color="success" onClick={() => handleRenew(c.id, 365)}><PlayArrow fontSize="small" /></IconButton></Tooltip>
                         )}
                         <Tooltip title="Ajouter des jours"><IconButton size="small" color="info" onClick={() => handleAddDays(c.id)}><CalendarMonth fontSize="small" /></IconButton></Tooltip>
                         <Tooltip title="Réactiver"><IconButton size="small" color="success" onClick={() => handleReactivate(c.id)}><PlayArrow fontSize="small" /></IconButton></Tooltip>
