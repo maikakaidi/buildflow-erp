@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
+      includeAssets: ['favicon.svg', 'favicon.png'],
       manifest: {
         name: 'BuildFlow ERP',
         short_name: 'BuildFlow',
